@@ -1,0 +1,13 @@
+{
+  "name": "agent-skills",
+  "version": "0.1.0",
+  "description": "Personal agent skills. Start with RADIO system design practice.",
+  "author": {
+    "name": "Hien Luong"
+  },
+  "homepage": "https://github.com/phuhien92/agent-skills",
+  "repository": "https://github.com/phuhien92/agent-skills",
+  "license": "MIT",
+  "commands": ["./.claude/commands", "./commands"],
+  "skills": "./skills"
+}
