@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner.svg" alt="agent-skills: personal skills for AI coding agents, one folder per skill, one slash command to start it" width="100%">
+</p>
+
 # Agent Skills
 
 Personal skills for AI coding agents. Layout matches the [Agent Skills](https://github.com/addyosmani/agent-skills) pack: one directory per skill, slash commands as entry points, plugin manifests for Claude Code / Cursor.

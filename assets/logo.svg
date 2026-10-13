@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="agent-skills logo">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#022C22"/>
+      <stop offset="1" stop-color="#047857"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+  <!-- a stack of skill cards -->
+  <rect x="34" y="26" width="60" height="44" rx="9" fill="#A7F3D0" opacity="0.35"/>
+  <rect x="28" y="38" width="72" height="52" rx="10" fill="#A7F3D0" opacity="0.6"/>
+  <rect x="22" y="52" width="84" height="54" rx="11" fill="#ECFDF5"/>
+  <!-- the slash command that loads one -->
+  <path d="M60 96 L76 62" stroke="#047857" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="90" cy="92" r="6" fill="#FBBF24"/>
+</svg>

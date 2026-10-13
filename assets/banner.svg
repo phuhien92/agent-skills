@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 320" width="1280" height="320" role="img" aria-label="agent-skills: personal skills for AI coding agents, each one a folder and a slash command">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#011C16"/>
+      <stop offset="0.6" stop-color="#022C22"/>
+      <stop offset="1" stop-color="#065F46"/>
+    </linearGradient>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#022C22"/>
+      <stop offset="1" stop-color="#047857"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="320" fill="url(#bg)"/>
+  <!-- faint fanned cards in the background -->
+  <g transform="translate(40 0)">
+  <g fill="none" stroke="#34D399" stroke-opacity="0.22" stroke-width="2">
+    <rect x="1010" y="40" width="190" height="120" rx="16" transform="rotate(-8 1105 100)"/>
+    <rect x="1030" y="110" width="190" height="120" rx="16" transform="rotate(4 1125 170)"/>
+    <rect x="1000" y="180" width="190" height="120" rx="16" transform="rotate(-3 1095 240)"/>
+  </g>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="28" fill="#6EE7B7" fill-opacity="0.3">
+    <text x="1040" y="110" transform="rotate(-8 1105 100)">SKILL.md</text>
+    <text x="1060" y="180" transform="rotate(4 1125 170)">/brain</text>
+    <text x="1030" y="250" transform="rotate(-3 1095 240)">/hien</text>
+  </g>
+  </g>
+  <!-- logo -->
+  <g transform="translate(80 72) scale(1.375)">
+    <rect width="128" height="128" rx="28" fill="url(#tile)" stroke="#10B981" stroke-opacity="0.5"/>
+    <rect x="34" y="26" width="60" height="44" rx="9" fill="#A7F3D0" opacity="0.35"/>
+    <rect x="28" y="38" width="72" height="52" rx="10" fill="#A7F3D0" opacity="0.6"/>
+    <rect x="22" y="52" width="84" height="54" rx="11" fill="#ECFDF5"/>
+    <path d="M60 96 L76 62" stroke="#047857" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="90" cy="92" r="6" fill="#FBBF24"/>
+  </g>
+  <!-- wordmark -->
+  <g font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+    <text x="300" y="150" font-size="84" font-weight="800" fill="#FFFFFF" letter-spacing="-2">agent<tspan fill="#6EE7B7" font-weight="600">-skills</tspan></text>
+    <text x="304" y="196" font-size="26" fill="#A7F3D0">Personal skills for AI coding agents.</text>
+    <text x="304" y="230" font-size="26" fill="#A7F3D0">One folder per skill, one slash command to start it.</text>
+  </g>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17" fill="#ECFDF5">
+    <rect x="304" y="252" width="88" height="32" rx="16" fill="#065F46"/><text x="322" y="274">/hien</text>
+    <rect x="404" y="252" width="98" height="32" rx="16" fill="#065F46"/><text x="422" y="274">/brain</text>
+    <rect x="514" y="252" width="324" height="32" rx="16" fill="#065F46"/><text x="532" y="274">/radio-system-design-practice</text>
+    <rect x="850" y="252" width="140" height="32" rx="16" fill="#065F46"/><text x="868" y="274">any agent</text>
+  </g>
+</svg>
