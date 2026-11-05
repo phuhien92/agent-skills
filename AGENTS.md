@@ -4,7 +4,11 @@ This repo is a skill pack. Skills live under `skills/<name>/SKILL.md`. Slash com
 
 ## When the user runs `/hien`
 
-Read `skills/hien/SKILL.md` and follow it exactly. Load the colocated knowledge files, then follow `ENTRY.md`. If those files cannot be loaded, stop and say so. Do not invent their contents.
+Read `skills/hien/SKILL.md` and follow it exactly. It loads Hien's public profile for the `twin` skill. If the files cannot be loaded, stop and say so. Do not invent their contents.
+
+## When the user runs `/twin`
+
+Read `skills/twin/SKILL.md` and follow it. Evidence or nothing: every trait points at a source. Profiles live outside this repo unless the user says otherwise.
 
 ## When the user runs `/radio-system-design-practice`
 
