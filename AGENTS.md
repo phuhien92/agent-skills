@@ -14,6 +14,10 @@ Read `skills/radio-system-design-practice/SKILL.md` and follow it exactly. Coach
 
 Read `skills/brain/SKILL.md` and follow it. It drives the `brain` CLI; if `brain` is not installed, say so and fall back to grep. The skill is copied from `phuhien92/brain-cli` — change it there first, then copy it here.
 
+## When the user runs `/behavioral-story-depth`
+
+Read `skills/behavioral-story-depth/SKILL.md` and follow it. Coach. One question per turn. Never invent metrics, names, or events; missing facts become questions. Load `probes.md` only in Drill mode.
+
 ## Adding a skill
 
 See `ARCHITECTURE.md` for the full wiring. Short version:
