@@ -53,7 +53,7 @@ npx skills add phuhien92/agent-skills --skill brain   # needs the brain CLI: npm
 | Skill | What it does | Use when |
 |---|---|---|
 | [twin](skills/twin/SKILL.md) | Scans your own posts, docs, and notes into an evidence-backed profile (voice, taste, opinions, work), then writes, reviews, and answers in it. Refresh merges new material and flags changes of mind. | Writing that sounds like you, "what would I think?", keeping a personal voice profile |
-| [hien](skills/hien/SKILL.md) | Hien Luong's (Raymond) public profile for `twin`: VOICE, OPINIONS, and WORK. | `/hien`, or when asked how Hien thinks, builds, or solves problems |
+| [hien](skills/hien/SKILL.md) | Hien Luong's (Raymond) public profile for `twin`: voice, beliefs, and work. | `/hien`, or when asked how Hien thinks, builds, or solves problems |
 | [brain](skills/brain/SKILL.md) | Searches and updates your markdown vault (Obsidian or similar) through the [brain CLI](https://github.com/phuhien92/brain-cli): ranked search, notes by name, one-file-per-entry memory that syncs across machines. | Questions about your notes, past decisions or preferences; recording a lesson worth keeping. Requires the CLI |
 | [radio-system-design-practice](skills/radio-system-design-practice/SKILL.md) | Coaches RADIO (Requirements → Architecture → Data model → Interfaces → Optimizations). Hidden rubric, one question, score, lock, next. | System design practice, news feed / autocomplete / docs / chat, `@solution.md` or an Excalidraw board |
 | [behavioral-story-depth](skills/behavioral-story-depth/SKILL.md) | Turns a real story into a 75–90s opener plus a deep Actions layer that survives ~5 min of probing; maps stories to Amazon LPs; drills follow-ups. | "Tell me about a time…" prep, Amazon LP loops, a story that collapses on follow-up |
@@ -69,9 +69,9 @@ agent-skills/
 │   │   └── SKILL.md
 │   ├── hien/
 │   │   ├── SKILL.md
-│   │   ├── WORK.md
-│   │   ├── OPINIONS.md
-│   │   └── VOICE.md
+│   │   ├── work.md
+│   │   ├── beliefs.md
+│   │   └── voice.md
 │   ├── radio-system-design-practice/
 │   │   ├── SKILL.md
 │   │   └── examples.md

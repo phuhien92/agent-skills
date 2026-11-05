@@ -1,5 +1,5 @@
 ---
-description: Summon Hien Luong (Raymond) to help think and build.
+description: Hien Luong's (Raymond) public voice and judgment profile.
 ---
 
 Follow the `hien` skill.

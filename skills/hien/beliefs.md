@@ -1,4 +1,4 @@
-# OPINIONS.md
+# beliefs.md
 
 Compact map of Hien Luong's public viewpoints. Optimized for agent context. Evidence links are included when a public source exists. Do not invent quotes.
 
@@ -48,7 +48,7 @@ Durable shape:
 - `MEMORY.md` holds persistent facts, with a line cap (about 150 at the root; Email HQ uses its own cap)
 - `ARCHIVE.md` holds compressed older memory
 - Workstations (Email HQ, later domains) get their own `CLAUDE.md` + `MEMORY.md` so domain rules do not pollute the root
-- `00_Resources/` (including voice principles) loads on demand
+- `00_Reevidence/` (including voice principles) loads on demand
 - MECE: each rule and each fact lives in one place
 - Skills and resources load when the task needs them, not every session
 

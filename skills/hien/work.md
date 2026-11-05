@@ -1,4 +1,4 @@
-# WORK.md
+# work.md
 
 Public surfaces and projects Hien Luong owns or maintains in public. Use this file to know what exists and what it is for before reaching for something else.
 
