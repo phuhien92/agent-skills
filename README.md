@@ -69,7 +69,7 @@ agent-skills/
 │   │   ├── OPINIONS.md
 │   │   └── VOICE.md
 │   ├── radio-system-design-practice/
-│       ├── SKILL.md
+│   │   ├── SKILL.md
 │   │   └── examples.md
 │   └── behavioral-story-depth/
 │       ├── SKILL.md
