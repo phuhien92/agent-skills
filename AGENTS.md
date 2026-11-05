@@ -20,6 +20,10 @@ Read `skills/behavioral-story-depth/SKILL.md` and follow it. Coach. One question
 
 ## Adding a skill
 
+See `ARCHITECTURE.md` for the full wiring. Short version:
+
 1. Create `skills/<name>/SKILL.md` with `name` + `description` frontmatter.
-2. Add `.claude/commands/<name>.md` that says “follow the `<name>` skill.”
-3. List it in `README.md`.
+2. Add `.claude/commands/`, `commands/`, and `.cursor/commands/` files that say “follow the `<name>` skill,” plus the `.cursor/skills/<name>` symlink.
+3. List it in `README.md` and add a `/name` section here.
+4. Add `evals/<name>.md` with at least three cases.
+5. Run `python3 tools/validate.py` until it reports no errors.

@@ -92,6 +92,14 @@ Each skill is a workflow, not a dump of notes:
 
 `/hien` keeps ENTRY, TOOLS, OPINIONS, and VOICE next to the skill so they do not collide with other skills in this pack.
 
+## Checks
+
+```bash
+python3 tools/validate.py   # wiring + structure, runs in CI
+```
+
+Behavior cases live in `evals/`. See [ARCHITECTURE.md](ARCHITECTURE.md) for the layout and rules.
+
 ## License
 
 MIT
