@@ -2,6 +2,10 @@
 
 **Branch:** `claude/diff-size`
 
+**Base:** `origin/main`
+
+**Size:** `python3 skills/slice-spec/scripts/diff_size.py . origin/main..HEAD`
+
 ## Intent
 
 > do we also have rules to keep PR code changes limit
@@ -57,6 +61,6 @@ Settled at the slice 01 gate (see `decisions.md`): always ignore indentation cha
 
 ## Next agent prompt
 
-Status: slices 01 to 03 built. `diff_size.py` now has the classifier (02, with the fixes from Check 2) and the product-code filter (03): `count_product(repo, base, head)` judges each side of a diff against its own commit's tree, removes each non-product side from a temporary copy of its tree and diffs the copies (so a skipped side adds no lines and supplies no moves, nothing is written to the repo, and commit size can't hit argument limits), and counts skipped files by reason. `tools/test_skip_rules_drift.py` guards the copied rules. On #27 the filtered range is 513 new / 1,254 moved; that includes `specs/split-cli-commands/golden.sh`, which is a shell script and so counts as code under the same rules. Next: slice 04, the CLI and report.
+Status: all five slices built and checked (Checks 1–5), with Check 5's fixes in: one documented Size command per spec (real path, Base, running total), unattended runs never wait on a size suggestion, and shallow-clone rows get no tier. The branch measured 1,485 new lines, over soft, so the user split it into three stacked PRs: #10 (to `0945449`), #11 (to `57d7830`), and PR 3/3 from this branch.
 
 Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.

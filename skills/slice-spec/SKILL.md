@@ -51,13 +51,15 @@ You are a **planner**, not a builder. Agents build well when each piece of work 
    A slice that fails gets split, and the pieces go through the test again. Repeat until every slice passes. A broad verb ("add the backend", "make it match the design") is a split you haven't made yet.
 
    A slice whose check depends on an open question is built on the recommended answer. Say so in the slice, and reslice if the answer changes.
+
+   **Size the plan.** Estimate each slice's new lines of product code (moved code doesn't count). When one slice is over 800, split it. When the slices together are over 800, split the goal into sub-goals, one PR each: every PR ships on its own and leaves `main` working, and the slice graph's **PR** column says which PR each slice belongs to. The estimate is a planning guess; `scripts/diff_size.py` (next to this file) measures the real number after each slice. When you write the spec, put that script's real path and the PR's base branch into the README, so a worker who reads only the spec can run it.
 5. **Write the spec.** Load `spec-format.md` now and follow it.
 6. **Sweep the conversation.** Every decision, rejected option, and constraint from the interview lands in the spec or is dropped on purpose. The next agent reads only the spec, never this chat.
 7. **Hand back.** Show the slice list (one line each, with its check) and the open questions. End with one next step.
 
 ## Reslice
 
-1. Read the spec, the failing slice, and `decisions.md` if it exists. A cluster of ledger entries around one slice is the signal that it was foggy.
+1. Read the spec, the failing slice, and `decisions.md` if it exists. A cluster of ledger entries around one slice is the signal that it was foggy. Reslice is also the answer when the Size command shows a slice's diff crossed soft (800 new lines), or the branch's running total crossed soft: then suggest moving the remaining slices to a follow-up PR. Size alone never reslices on its own: with a person present, they decide; with no one present, keep building and record the suggestion in the handback and under Open questions.
 2. Name what made it fail: two questions in one slice, a seam that wasn't real, or a check that couldn't fail.
 3. Split it with the Interview steps 3 and 4, ask the user only what the code and ledger can't answer, and update the spec in place. Mark the old slice as replaced, with a pointer to the new ones.
 

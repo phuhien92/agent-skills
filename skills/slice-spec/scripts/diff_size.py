@@ -12,12 +12,23 @@ alphanumeric characters, so short moved lines (a lone "}" or a one-word import) 
 as new. Moves are found inside one diff, so a block moved across two commits counts
 as deleted in one and new in the other.
 
+Usage: diff_size.py <repo> <range> [--json]
+
+<range> is A..B (the commits after A up to B, first parents only) or one commit.
+Prints one row per commit, oldest first, then the whole range diffed at once, with a
+tier for each: target 400, soft 800, hard 1500 new lines. Over soft, a commit gets
+"consider Reslice" and the range gets "split the goal"; over hard, a commit gets
+"reslice before review". These are warnings: the exit code is 0 whatever the size,
+and 2 only on bad input (not a repo, unknown commit, git too old).
+
 Standard library only. Needs git 2.17 or later.
 """
 from __future__ import annotations
 
+import json
 import os
 import re
+import sys
 import subprocess
 import tempfile
 from pathlib import PurePosixPath
@@ -563,3 +574,151 @@ def count_product(repo: Path, base: str, head: str) -> tuple[list[FileCount], Fi
         head_tree = pruned_tree(repo, head, filtered.drop_new, env)
         files = count_range(repo, base_tree, head_tree, env=env)
     return files, filtered
+
+
+# --- Report and CLI (slice 04) ------------------------------------------------------
+
+DIFF_TARGET, DIFF_SOFT, DIFF_HARD = 400, 800, 1500
+DIFF_LABEL = {"target": f"over target ({DIFF_TARGET})", "soft": f"over soft ({DIFF_SOFT})",
+              "hard": f"over hard ({DIFF_HARD})"}
+NOTES = [
+    "Product code only, with codebase-rubric's skip rules.",
+    "Moved lines ignore indentation changes. A moved line shorter than git's block floor "
+    "(20 letters and digits) counts as new, so new leans high.",
+    "The commit rows find moves inside each commit; the whole-range row finds moves across "
+    "the range, so its new count can be lower than the rows' sum.",
+    "The whole-range row starts where the branch left the base (their merge base), as a PR does.",
+    "Deleted leaves out moved-out lines; a moved block shows only under Moved.",
+]
+
+
+def diff_tier(new: int) -> str | None:
+    if new > DIFF_HARD:
+        return "hard"
+    if new > DIFF_SOFT:
+        return "soft"
+    if new > DIFF_TARGET:
+        return "target"
+    return None
+
+
+def summarise(files: list[FileCount], filtered: Filtered) -> dict:
+    new = sum(f.new for f in files)
+    return {"new": new, "moved": sum(f.moved for f in files),
+            "deleted": sum(f.deleted for f in files), "moved_out": sum(f.moved_out for f in files),
+            "tier": diff_tier(new), "skipped": dict(sorted(filtered.skipped.items())),
+            "attrs_from_worktree": filtered.attrs_from_worktree}
+
+
+def shallow_commits(repo: Path) -> set[str]:
+    """Commits whose parents a shallow clone doesn't have."""
+    path = Path(git(repo, "rev-parse", "--git-path", "shallow").strip())
+    path = path if path.is_absolute() else repo / path
+    return set(path.read_text().split()) if path.is_file() else set()
+
+
+def merge_base(repo: Path, a: str, b: str) -> str | None:
+    out = git(repo, "merge-base", a, b, check=False).strip()
+    return out or None
+
+
+def subject(repo: Path, commit: str) -> str:
+    return git(repo, "log", "-1", "--format=%s", commit).strip()
+
+
+def report(repo: Path, rev_range: str) -> dict:
+    check_git()
+    check_repo(repo)
+    repo = toplevel(repo)
+    commits = commits_in(repo, rev_range)
+    shallow = shallow_commits(repo)
+    rows = []
+    for sha in commits:
+        files, filtered = count_product(repo, parent(repo, sha), sha)
+        row = {"commit": sha[:7], "subject": subject(repo, sha), **summarise(files, filtered),
+               "parent_missing": sha in shallow}
+        if row["parent_missing"]:
+            row["tier"] = None  # the count is the whole tree, so a tier would mislead
+        rows.append(row)
+    total, base_note = None, None
+    if ".." in rev_range:
+        a, _, b = rev_range.partition("..")
+        a_sha, b_sha = resolve(repo, a or "HEAD"), resolve(repo, b or "HEAD")
+        base = merge_base(repo, a_sha, b_sha)
+        if base is None:
+            base, base_note = EMPTY_TREE, "no-common-history"
+        elif base != a_sha:
+            base_note = "base-not-ancestor"
+        files, filtered = count_product(repo, base, b_sha)
+        total = {**summarise(files, filtered), "base": base[:7] if base != EMPTY_TREE else None,
+                 "base_note": base_note}
+    return {"range": rev_range,
+            "tiers": {"target": DIFF_TARGET, "soft": DIFF_SOFT, "hard": DIFF_HARD},
+            "commits": rows, "total": total, "notes": NOTES}
+
+
+def warnings(data: dict) -> list[str]:
+    out = []
+    for row in data["commits"]:
+        if row["tier"] == "soft":
+            out.append(f"`{row['commit']}` is {DIFF_LABEL['soft']}: consider Reslice.")
+        elif row["tier"] == "hard":
+            out.append(f"`{row['commit']}` is {DIFF_LABEL['hard']}: reslice before review.")
+    total = data["total"]
+    if total and total["tier"] in ("soft", "hard"):
+        out.append(f"The whole range is {DIFF_LABEL[total['tier']]}: split the goal.")
+    for row in data["commits"]:
+        if row["parent_missing"]:
+            out.append(f"`{row['commit']}` has no parent in this shallow clone, so its row counts "
+                       "every line as new. Fetch more history for a real count.")
+    if total and total["base_note"] == "base-not-ancestor":
+        out.append(f"`{data['range'].partition('..')[0]}` is not an ancestor of the range's end; "
+                   f"the whole range is sized from their merge base `{total['base']}`.")
+    if total and total["base_note"] == "no-common-history":
+        out.append("The range's two ends share no history; the whole range is sized from an empty tree.")
+    if any(r["attrs_from_worktree"] for r in data["commits"]) or (total and total["attrs_from_worktree"]):
+        out.append("linguist attributes were read from the working tree (git older than 2.40).")
+    return out
+
+
+def cell(text: str) -> str:
+    """Table-safe text: an HTML entity for |, so no backslash in a subject can unescape it."""
+    return text.replace("|", "&#124;")
+
+
+def as_text(data: dict) -> str:
+    out = [f"Change size for `{data['range']}`", "",
+           "| Commit | Subject | New | Moved | Deleted | Tier |", "|---|---|---|---|---|---|"]
+    for r in data["commits"]:
+        tier = DIFF_LABEL[r["tier"]] if r["tier"] else ""
+        out.append(f"| `{r['commit']}` | {cell(r['subject'])} | {r['new']} | {r['moved']} | {r['deleted']} | {tier} |")
+    total = data["total"]
+    if total:
+        tier = DIFF_LABEL[total["tier"]] if total["tier"] else ""
+        out.append(f"| **Whole range** | diffed at once | **{total['new']}** | {total['moved']} | "
+                   f"{total['deleted']} | {tier} |")
+    skipped = (total or (data["commits"][0] if data["commits"] else {"skipped": {}}))["skipped"]
+    out += ["", "Skipped files: " + (", ".join(f"{SKIP_LABELS[k]}: {v}" for k, v in skipped.items()) or "none")]
+    warn = warnings(data)
+    if warn:
+        out += ["", "**Warnings**", ""] + [f"- {w}" for w in warn]
+    out += ["", "**Notes**", ""] + [f"- {n}" for n in data["notes"]]
+    return "\n".join(out)
+
+
+def main(argv: list[str]) -> int:
+    args = [a for a in argv if a != "--json"]
+    if len(args) != 2 or any(a.startswith("-") for a in args):
+        print("usage: diff_size.py <repo> <range> [--json]", file=sys.stderr)
+        return 2
+    try:
+        data = report(Path(args[0]), args[1])
+    except DiffSizeError as err:
+        print(f"diff_size: {err}", file=sys.stderr)
+        return 2
+    print(json.dumps(data, indent=2) if "--json" in argv else as_text(data))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
