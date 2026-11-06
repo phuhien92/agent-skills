@@ -1,0 +1,14 @@
+{
+  "name": "hien-skills",
+  "description": "Agent skill blocks for software factories.",
+  "owner": {
+    "name": "Hien Luong"
+  },
+  "plugins": [
+    {
+      "name": "agent-skills",
+      "source": "./",
+      "description": "Agent skill blocks: /think-with-me, /brain, /behavioral-story-depth, /radio-system-design-practice, /slice-spec, /decision-checker, and /codebase-rubric."
+    }
+  ]
+}

@@ -2,9 +2,9 @@
 
 This repo is a skill pack. Skills live under `skills/<name>/SKILL.md`. Slash commands under `.claude/commands/` activate them.
 
-## When the user runs `/hien`
+## When the user runs `/think-with-me`
 
-Read `skills/hien/SKILL.md` and follow it exactly. Load the colocated knowledge files, then follow `ENTRY.md`. If those files cannot be loaded, stop and say so. Do not invent their contents.
+Read `skills/think-with-me/SKILL.md` and follow it exactly. Load the colocated knowledge files, then follow `ENTRY.md`. If those files cannot be loaded, stop and say so. Do not invent their contents.
 
 ## When the user runs `/radio-system-design-practice`
 
@@ -17,6 +17,22 @@ Read `skills/brain/SKILL.md` and follow it. It drives the `brain` CLI; if `brain
 ## When the user runs `/behavioral-story-depth`
 
 Read `skills/behavioral-story-depth/SKILL.md` and follow it. Coach. One question per turn. Never invent metrics, names, or events; missing facts become questions. Load `probes.md` only in Drill mode.
+
+## When the user runs `/slice-spec`
+
+Read `skills/slice-spec/SKILL.md` and follow it. Plan. One question per turn, with a recommended answer. Write only under `specs/<feature>/`. Load `spec-format.md` when writing the spec and `drafting.md` only when the first draft has four or more slices.
+
+## When the user runs `/codebase-rubric`
+
+Read `skills/codebase-rubric/SKILL.md` and follow it. Survey. Write only `scorecards/<date>.md` in the target repo. One independent scorer per area; every score cites `path:line`. Load `rubric.md` for the scorers and `scorecard.md` when writing. Run `scripts/check_scorecard.py --repo` until it prints `ok`.
+
+## When the user runs `/decision-checker`
+
+Read `skills/decision-checker/SKILL.md` and follow it. Review. Never change code. Rank decisions least-confident first. Load `ledger.md` only when writing the ledger. Load `harness.md` only when another workflow or a hook calls it, or when wiring it in as a gate.
+
+## Agents check before the human reviews
+
+For build, review, or research work (including authoring skills here), have independent subagents do the front-loaded work first: drafting, verifying, and critiquing each other's output with fresh context. Hand the user the checked result plus a short ledger of the decisions made on their behalf, least-confident first (`/decision-checker` produces it). Ask before starting only when intent or scope is unclear.
 
 ## Adding a skill
 
