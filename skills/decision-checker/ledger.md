@@ -8,6 +8,7 @@ Loaded by `decision-checker` at step 5 of Check. One entry per decision.
 ### <Headline: the decision in one line>
 
 - **When:** commit, pass, or step where it landed
+- **Slice:** NN, when a spec owns the work (lets Reslice spot clusters)
 - **What happens now:** a short scenario in plain words. The event that
   triggers it, what the code does today, and what the obvious alternative
   would have done. Define any term the build invented the first time you use it.

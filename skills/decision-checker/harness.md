@@ -7,7 +7,7 @@ Loaded only when wiring this skill into a harness, or when a harness calls it. T
 | | What | Where |
 |---|---|---|
 | **In: scope** | The change to check | The current branch against its base, unless the caller names a commit range or PR |
-| **In: baseline** | What was actually asked | First match: a path the caller passes; `specs/<feature>/README.md` for the branch's spec; the task's intent section in its instructions (firstmate: `## Captain's intent`); the session prompt |
+| **In: baseline** | What was actually asked | First match: a path the caller passes; the spec whose README names this branch (`specs/<feature>/README.md` plus its `slices/`, whose **Delegated to the worker** lists are skipped); the task's intent section in its instructions (firstmate: `## Captain's intent`); the session prompt |
 | **Out: ledger** | Every decision, verdict, confidence | `decisions.md` beside the spec, else at the repo root |
 | **Out: handback** | What the caller reports | The ledger's "Check these first" and verdict counts, never the diff |
 | **Side effects** | None | The code is untouched. Only `decisions.md` changes |
