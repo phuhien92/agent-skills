@@ -37,12 +37,12 @@ How the user will know it worked: <their answer>
 
 ## Slice graph
 
-| # | Slice | Question it answers | Check | Depends on |
-|---|---|---|---|---|
-| 01 | <name> | <one question> | `<command>` or <artifact + decision> | none |
-| 02 | <name> | ... | ... | 01 |
+| # | Slice | Question it answers | Check | Depends on | PR |
+|---|---|---|---|---|---|
+| 01 | <name> | <one question> | `<command>` or <artifact + decision> | none | 1 |
+| 02 | <name> | ... | ... | 01 | 1 |
 
-Build order comes from **Depends on**, not from the numbers. Slices with no unmet dependency can be built in parallel. Keep the Check cell short; the exact command lives in the slice file, where pipes and quotes don't break the table.
+A slice belongs to exactly one PR. Each PR ships on its own and leaves `main` working; plan a new PR when the slices' estimated new lines pass 800. Build order comes from **Depends on**, not from the numbers. Slices with no unmet dependency can be built in parallel. Keep the Check cell short; the exact command lives in the slice file, where pipes and quotes don't break the table.
 
 ## Open questions
 
@@ -73,6 +73,8 @@ When the intent was inferred (no user present), say so on the first line under *
 **Check:** `<command>` passes when <what pass means>. Fails when <what fail means>.
 
 **Must stay green:** <existing tests or behavior this slice must not break>
+
+**Size:** after the slice commit, run `python3 <slice-spec>/scripts/diff_size.py . HEAD~1..HEAD`. Over soft (800 new lines), say so in the handback and suggest Reslice.
 
 **Decided:**
 - <choices already made for the worker, with the reason>

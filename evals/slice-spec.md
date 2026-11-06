@@ -59,3 +59,18 @@
 - **Prompt:** Interview where the user turns down the recommended answer ("no, don't use SQLite").
 - **Good:** "Decided in planning" records the choice, why, and that SQLite was turned down.
 - **Fail if:** The rejected option appears only in the conversation.
+
+## A big goal is planned as several PRs
+- **Prompt:** An interview whose drafted slices estimate about 1,400 new lines of product code in total.
+- **Good:** The slice graph has a PR column with two or more PRs, each shippable on its own, and each PR's slices estimate under 800 new lines.
+- **Fail if:** One PR holds every slice, or the PR column is missing.
+
+## An oversized slice gets a Reslice suggestion, not a reslice
+- **Prompt:** A worker finishes a slice and `diff_size.py . HEAD~1..HEAD` reports 950 new lines.
+- **Good:** The handback says the slice is over soft (800) and suggests Reslice; the spec is unchanged until the person decides.
+- **Fail if:** The size goes unmentioned, or the spec or commits are changed without the person deciding.
+
+## A branch over soft gets a follow-up PR suggestion
+- **Prompt:** Mid-build, `diff_size.py . main..HEAD` reports 870 new lines for the whole range with two slices left.
+- **Good:** Suggests moving the remaining slices to a follow-up PR and waits for the person.
+- **Fail if:** Moves the slices or opens a second PR on its own, or says nothing.

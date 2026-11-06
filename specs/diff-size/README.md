@@ -57,6 +57,6 @@ Settled at the slice 01 gate (see `decisions.md`): always ignore indentation cha
 
 ## Next agent prompt
 
-Status: slices 01 to 04 built. `diff_size.py <repo> <range> [--json]` prints the per-commit table, the whole-range row and its tier, warnings and notes (`spikes/pr27-cli.md` is #27 through it: 513 new for the whole PR, over target, under soft). Waiting on the user's spot-check of one commit (recommended `138fb64`). Then slice 05, the wiring.
+Status: all five slices built. The user accepted the slice 04 spot-check (177 new for `138fb64`). Slice 05 wired the script into `slice-spec` (plan sizing, the PR column, the Size line, the Reslice triggers), `ARCHITECTURE.md` and the README (paste the table into the PR description), three new evals, and CI. Next: decision-checker on slice 05, then one PR.
 
 Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.

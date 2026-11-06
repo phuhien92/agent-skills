@@ -477,3 +477,7 @@ Trivial calls folded: 7-character commit hashes (`sha[:7]`, not git's unique abb
 ## Next step
 
 Make the whole-range row start at the merge base, with a test where `main` moves after the branch point, then fix the markdown blocks and the shallow-clone fallback. Then put the merge-row and column-note calls, together with Check 2 and Check 3's open needs-you entries, in front of the user with the `138fb64` spot-check. Three of the seven entries are about which commits a range means (merge base, merges, shallow history). Settle in the spec that a range is "what the PR introduces", the way GitHub shows it, before slice 05 wires it in.
+
+# User decision at the slice 04 spot-check (2026-11-06)
+
+- **Spot-check accepted:** the user accepted 177 new lines for brain-cli `138fb64` (slice 05) after seeing the per-file breakdown: the router fix in `src/cli.ts` (35), each new command file's imports, handler signature and context unpacking (132 across 11 files), `golden.sh` (6) and `shared.ts` (4).
