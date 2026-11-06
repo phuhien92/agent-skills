@@ -1,5 +1,7 @@
 # Rubric
 
+**Approved:** by the user, 2026-11-06. Delete this line whenever an anchor or a "How to score" rule changes; scorecards then say `Rubric approved: no` until it is approved again.
+
 Loaded by `codebase-rubric` when scoring. Five areas, each scored 1 to 5 by its own scorer, who sees only its area and never the other scores. Only 1, 3, and 5 are defined; a 2 or a 4 means the evidence sits between two anchors. Every score needs at least one `path:line` that a person can open and see the reason in under a minute.
 
 The five areas and the size tiers (target 500, soft 800, hard 1,000 lines) come from a screenshot the user shared; its source is not yet known.

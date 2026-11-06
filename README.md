@@ -156,6 +156,7 @@ Each skill is a workflow, not a dump of notes:
 
 ```bash
 python3 tools/validate.py   # wiring + structure, runs in CI
+python3 -m unittest discover -s skills/codebase-rubric/scripts   # codebase-rubric scripts, runs in CI
 ```
 
 Behavior cases live in `evals/`. See [ARCHITECTURE.md](ARCHITECTURE.md) for the layout and rules.

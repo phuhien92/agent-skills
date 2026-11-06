@@ -464,3 +464,92 @@ Three of the seven entries sit on the seam between `size_report.py`, `check_scor
 ## Next step
 
 Make the three scripts agree on one valid scorecard (the checker owns it; `delta.py` and `size_report.py` defer to it), and rerun or mark the keen spike values, before 07 builds the skill on top of them.
+
+---
+
+# Check 4: close-out
+
+Check mode, run unattended (rule 7): no user present, every confidence capped at medium, saved without asking. Baseline: `specs/codebase-rubric/README.md` plus `slices/`. The README's "Decided in planning" calls are the user's, including the success test accepted on the brain-cli scorecard, and aren't listed.
+
+- **Scope:** `d9f9bb4..9b5d7fb` (`cd35b96`, `186ad47`, `9b5d7fb`): the third ledger's fixes, slice 07 (`skills/codebase-rubric/SKILL.md`, `spikes/07-brain-cli-scorecard.md`), and slice 08 wiring (three command files, the `.cursor/skills` link, `README.md`, `AGENTS.md`, three manifests, `evals/codebase-rubric.md`, `.github/workflows/validate.yml`, `ARCHITECTURE.md`).
+- **Self-report:** the implementer isn't live. Commit messages and the README "Next agent prompt" name no guesses, so this check rests on tracing.
+- **Evidence run:** `python3 tools/validate.py` prints "7 skills · 0 errors · 0 warnings" and exits 0. `python3 -m unittest discover -s skills/codebase-rubric/scripts` passes 31 tests. `check_scorecard.py specs/codebase-rubric/spikes/07-brain-cli-scorecard.md --repo /home/user/phuhien92/brain-cli` prints `ok`. brain-cli is at `7045e68`; its only change is the untracked `scorecards/2026-11-06.md`, identical to the spike. `size_report.py` on brain-cli reproduces the spike's size table and skip line. `grep -r "—" skills/codebase-rubric` finds nothing. `SKILL.md` is 3,786 bytes. Throwaway probes of `delta.py` and `check_scorecard.py` ran in the session scratchpad and were deleted. No keen-design-system clone exists here, so its new skip counts couldn't be rerun.
+- **Third ledger, fix status (`cd35b96`):** confirmed fixed: `delta.py` refuses scorecards the checker rejects (tested); the "(none over 500)" row is gone and an empty size table passes the checker; `--repo` rejects paths outside the repo and backwards ranges (tested); the keen spike now names the run behind its counts (`size_report.py`, current rules, 2026-11-06, commit checked with `git log -1`), which is what the redo asked, though the counts couldn't be rerun here. Mostly fixed: the template's enforced-rules list; one mismatch remains (entry below).
+- **Skipped as delegated:** step wording and order in `SKILL.md` (07), README placement and wording (08).
+- **Trivial, folded:** 2 calls. `ARCHITECTURE.md:96` and `README.md:158` still describe CI as running only the validator, though it now runs the script tests too; the three command files share one body word for word.
+
+## Check these first
+
+1. When `delta.py` refuses the previous scorecard, the skill says nothing, and the scorecard ships saying "First run." (needs-you, low).
+2. `Rubric approved` is set by a rule an unattended run can't check (unsound, low).
+3. `ARCHITECTURE.md` records "17 unsound calls, all fixed"; the ledgers hold 15, and not all were fixed (unsound, medium).
+
+## needs-you
+
+### When `delta.py` refuses the previous scorecard, the skill says nothing, and the scorecard ships saying "First run."
+
+- **When:** `186ad47`, `SKILL.md` workflow steps 4 to 6
+- **Slice:** 07
+- **What happens now:** step 4 writes the scorecard with `First run.` in its delta section; step 5 runs `delta.py --dir` and replaces that with its output. Since `cd35b96`, `delta.py` exits 1 when the previous scorecard fails the checker: one hand-edited, or written before the contract last changed. A probe with a previous scorecard whose `Rubric approved` read `maybe` gave "delta: previous scorecard is not valid ..." and exit 1. The skill names no action for that, and the checker in step 6 doesn't look inside the delta section, so a scorecard left saying `First run.` (or holding the error text) prints `ok` (probe). Every later run hits the same broken previous file. The obvious alternatives: write a line such as "No delta: <reason from delta.py>" and carry on, or stop and report.
+- **The gap:** slice 06 says `delta.py` "exits 1 with a reason, never guesses"; slice 07 says never wait, and doesn't say what a run does with that exit.
+- **Reach:** the README pitches the skill as "shows what changed since the last one"; one bad old file silently turns that off for every future run, and the scorecard claims there was no earlier run.
+- **Verdict:** needs-you. Whether a broken history fails the run or degrades to a note is a product call. **Recommended call:** on exit 1, put "No delta: " plus `delta.py`'s reason in the delta section, say so in the hand-back, and never leave `First run.` when an earlier scorecard exists. **To reverse:** drop that line from step 5 and treat exit 1 as a failed run.
+- **Confidence:** low
+
+## unsound
+
+### `Rubric approved` is set by a rule an unattended run can't check
+
+- **When:** `186ad47`, `SKILL.md` workflow step 4
+- **Slice:** 07
+- **What happens now:** step 4 says `Rubric approved` is `yes` "unless `rubric.md` was edited after the user approved it." Nothing in the skill records when or what the user approved: `rubric.md` carries no approval date, version, or hash, and the approval lives only in this spec's README, which an installed copy of the skill (`npx skills add`) doesn't ship. A scorer in another repo has no way to tell, so the field will read `yes` every time, including after the anchors change. The obvious alternative records the approval where the run can read it (for example an "Approved: <date>" line in `rubric.md` that any edit must clear) and derives the field from that.
+- **The gap:** slice 07's no-user rule says "say if anchors were unapproved" without saying how a run would know.
+- **Reach:** the field exists so a reader can trust the anchors behind a score; a field that can't be false tells them nothing, and later anchor edits (as happened once in check 2) would go unflagged.
+- **Verdict:** unsound. A meta field the checker requires is filled by a rule nobody can evaluate. **Redo from:** `Rubric approved` is derived from an approval record shipped with the skill, and editing the anchors without a new approval makes it `no`.
+- **Confidence:** low
+
+### `ARCHITECTURE.md` records "17 unsound calls, all fixed"; the ledgers hold 15, and not all were fixed
+
+- **When:** `9b5d7fb`, `ARCHITECTURE.md` decision entry "codebase-rubric is the Verify block", "Where it can fail"
+- **Slice:** 08
+- **What happens now:** the entry says "Three `decision-checker` ledgers during the build found 17 unsound calls, all fixed; the user made 14 calls along the way." The three checks list 4, 6, and 5 unsound entries, 15 in all. Some were closed by the user accepting them rather than by a fix (check 3 records the loosened Modularity 5 anchor as "resolved by the user's calls"), and the template mismatch below is still open. The "14 calls" figure has no list behind it to check. The obvious alternative states counts that match the ledger, or links to `specs/codebase-rubric/decisions.md` instead of counting.
+- **The gap:** slice 08 asked for "a decision entry" without saying what evidence it may summarise.
+- **Reach:** `ARCHITECTURE.md` is the durable record the next skill's builder reads; a wrong count there teaches that the summary needn't match the ledger.
+- **Verdict:** unsound. A durable record states figures its own source contradicts. **Redo from:** every count in the decision entry matches `decisions.md`, and "fixed" is used only for entries whose code changed.
+- **Confidence:** medium
+
+### The template says a sample needs 1 ≤ N ≤ M; the checker accepts `0 of 6` (open from check 3)
+
+- **When:** `cd35b96`, `scorecard.md` "Rules the checker enforces"; `check_scorecard.py` sample check (unchanged)
+- **Slice:** 05
+- **What happens now:** `cd35b96` moved the unenforced rules under "Your job, not the checker's", which fixes most of check 3's entry. One line still disagrees: the list says a numeric score has "a Sample of the form `N of M` with 1 ≤ N ≤ M", while the checker only requires 1 ≤ M and N ≤ M, so `0 of 6` passes (its error message says exactly that). The obvious alternative makes the two say the same thing, either way: `0 of 6` is a plausible sample for a score of 1.
+- **The gap:** check 3's redo ("each rule under 'enforces' has a check and a test") was applied to the rules it named, not re-swept.
+- **Reach:** small; the skill points scorers at this list, so a correct `0 of M` sample looks forbidden to them.
+- **Verdict:** unsound. The heading still promises a check that doesn't exist. **Redo from:** the sample rule on the list and the checker's sample check state the same bounds, with a test for N = 0.
+- **Confidence:** medium
+
+## sound
+
+### The errors scorer may run one existing test, capped at 120 seconds
+
+- **When:** `186ad47`, `SKILL.md` non-negotiable 4
+- **Slice:** 07
+- **What happens now:** if an existing test triggers the traced failure, the errors scorer may run it once; a run longer than 120 seconds is cut off and the trace stands on reading alone. The brain-cli run ran no test because `node_modules` wasn't installed, and said so in the trace. The user's planning call said "one existing test may run, with a timeout", without a number.
+- **The gap:** the timeout length.
+- **Reach:** a slow suite's single test may be cut off; the trace still exists by reading, so nothing blocks.
+- **Verdict:** sound. A short cap fits a read-mostly survey and the user's "never block" rule; easy to change in one place.
+- **Confidence:** medium
+
+### The eval file has seven cases, four beyond the three slice 08 named
+
+- **When:** `9b5d7fb`, `evals/codebase-rubric.md`
+- **Slice:** 08
+- **What happens now:** the three named cases are there (a score without evidence fails, only the scorecard is written, untested failures are never triggered). Added: scorers stay independent, too little code is "not scored", a same-day rerun never overwrites, and a second run shows what changed. Each one tests a rule the spec or the user decided; none adds behaviour.
+- **The gap:** the slice set a minimum, not a list.
+- **Reach:** more cases to keep in step when the skill changes; they cover the user's own calls (independence, "not scored", never overwrite, delta).
+- **Verdict:** sound. Every extra case maps to a decided rule.
+- **Confidence:** medium
+
+## Next step
+
+Decide the delta-refusal behaviour (Check these first, 1), then record the rubric approval where the skill can read it and correct the `ARCHITECTURE.md` counts before opening the PR.

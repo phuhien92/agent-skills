@@ -68,6 +68,6 @@ Build order comes from **Depends on**. 01 and 04 can start in parallel; 02 and 0
 
 ## Next agent prompt
 
-Status: all eight slices built. 08 wired the skill (commands, Cursor link, README, AGENTS, manifests, evals), added the script tests to CI, and recorded the Verify block in ARCHITECTURE.md. Ready for close-out: a final decision-checker pass, then a PR when the user asks.
+Status: done. Four decision-checker ledgers in `decisions.md`; close-out fixes applied. One open call for the user: when `delta.py` refuses the previous scorecard, the skill writes `Not compared: <reason>` (applied provisionally; reverse by deleting that sentence from SKILL.md step 5).
 
 Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.
