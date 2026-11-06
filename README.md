@@ -45,7 +45,7 @@ Your time goes into the facts in step 1 and the answers in steps 2 to 4. The ski
 
 ```
 /plugin marketplace add https://github.com/phuhien92/agent-skills.git
-/plugin install agent-skills@agent-skills
+/plugin install agent-skills@hien-skills
 ```
 
 **Cursor:** this repo already maps `skills/` into `.cursor/skills/` with a symlink. Open the repo, or add it as a project skill pack.

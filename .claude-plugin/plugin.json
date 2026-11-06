@@ -1,13 +1,16 @@
 {
   "name": "agent-skills",
   "version": "0.1.0",
-  "description": "Personal agent skills: /hien, RADIO system design practice, and /brain for searching your notes.",
+  "description": "Agent skill blocks for software factories: /hien, /brain, /behavioral-story-depth, and /radio-system-design-practice.",
   "author": {
     "name": "Hien Luong"
   },
   "homepage": "https://github.com/phuhien92/agent-skills",
   "repository": "https://github.com/phuhien92/agent-skills",
   "license": "MIT",
-  "commands": ["./.claude/commands", "./commands"],
+  "commands": [
+    "./.claude/commands",
+    "./commands"
+  ],
   "skills": "./skills"
 }
