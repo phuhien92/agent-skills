@@ -57,6 +57,6 @@ Settled at the slice 01 gate (see `decisions.md`): always ignore indentation cha
 
 ## Next agent prompt
 
-Status: slice 01 built (`spikes/pr27.py`, `spikes/pr27.md`) and checked (`decisions.md`, Check 1); its fixes are in. The user locked the tiers and the whitespace setting. Next: slice 02 (`slices/02-move-classifier.md`); it should also settle the two counting gaps the spike found (moved-out lines inside "deleted", pure renames counted as 0).
+Status: slices 01 and 02 built. 02 is `skills/slice-spec/scripts/diff_size.py` (classifier only, no CLI yet) with `test_diff_size.py`; it settles the two counting gaps from the spike: removed lines that are moves are `moved_out`, not `deleted`, and a pure rename counts every line as moved. Next: slice 03. Its filter must reach git as pathspecs, not filter counts afterwards: moves are matched only among the files diffed, so with `dist/` in the diff a `src/` line can count as moved from compiled output (`ea9b3ed`: 110 new with `dist/` in the diff, 111 without; the range: 536 vs 538).
 
 Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.
