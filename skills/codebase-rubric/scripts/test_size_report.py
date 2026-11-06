@@ -40,6 +40,7 @@ class SizeReportTest(unittest.TestCase):
             "third_party/lib.c": lines(600),
             "README.md": lines(950),
             "data.json": lines(2000),
+            "styles/theme.scss": lines(650),
         }
         for rel, text in files.items():
             p = self.repo / rel
@@ -68,6 +69,7 @@ class SizeReportTest(unittest.TestCase):
             "c801.ts": (801, "soft"),
             "f800.py": (800, "target"),
             "gen/keep.ts": (700, "target"),
+            "styles/theme.scss": (650, "target"),
             "third_party/lib.c": (600, "target"),
             "b501.py": (501, "target"),
         })

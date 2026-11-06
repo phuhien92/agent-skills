@@ -14,8 +14,8 @@ import check_scorecard  # noqa: E402
 GOOD = (HERE / "fixtures" / "good-keen.md").read_text(encoding="utf-8")
 
 
-def problems(text: str) -> list[str]:
-    return check_scorecard.problems(text)
+def problems(text: str, repo: Path | None = None) -> list[str]:
+    return check_scorecard.problems(text, repo)
 
 
 class CheckScorecardTest(unittest.TestCase):
@@ -79,6 +79,27 @@ class CheckScorecardTest(unittest.TestCase):
             "| Errors | 3 | token-generator CLI | 5 of 9 | `tools/token-generator/src/resolve.ts:32` names the token but not its file |",
             "| Errors | not scored | packages/keen | - | no failure path a person can reach |")
         self.assertEqual(problems(bad), [])
+
+    def test_at_least_three_scored(self) -> None:
+        bad = GOOD
+        for area, row_start in [("Architecture", "| Architecture | 4 |"), ("Modularity", "| Modularity | 4 |"), ("Abstraction", "| Abstraction | 3 |")]:
+            line = next(l for l in bad.splitlines() if l.startswith(row_start))
+            bad = bad.replace(line, f"| {area} | not scored | somewhere | - | too little code |")
+        self.assertTrue(any("only 2 areas scored" in p for p in problems(bad)))
+
+    def test_citations_checked_against_repo(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            for cited in ["pipeline.ts", "contrast.ts", "gates.ts", "boundary.ts", "resolve.ts", "cli.ts"]:
+                f = repo / "tools/token-generator/src" / cited
+                f.parent.mkdir(parents=True, exist_ok=True)
+                f.write_text("x\n" * 200)
+            self.assertEqual(problems(GOOD, repo), [])
+            (repo / "tools/token-generator/src/cli.ts").write_text("x\n" * 10)
+            found = problems(GOOD, repo)
+            self.assertTrue(any("cli.ts:16` is past the end (10 lines)" in p for p in found))
+            (repo / "tools/token-generator/src/gates.ts").unlink()
+            self.assertTrue(any("gates.ts` is not a file" in p for p in problems(GOOD, repo)))
 
     def test_meta_flags(self) -> None:
         bad = GOOD.replace("| Rubric approved | yes |", "| Rubric approved | maybe |")

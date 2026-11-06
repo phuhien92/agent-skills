@@ -2,7 +2,7 @@
 
 **Question:** Does one run, by hand or with no user present, produce a valid scorecard and change nothing else?
 
-**Seam:** `skills/codebase-rubric/SKILL.md`: run the size script, spawn five scorers in one message (one per area, each given `rubric.md`'s intro, "How to score", and its own area's section plus the repo path, never another area's section or score; the errors scorer runs the 02 trace), fill `scorecard.md`, run `delta.py` and `check_scorecard.py`, write `scorecards/<date>.md`.
+**Seam:** `skills/codebase-rubric/SKILL.md`: run the size script, spawn five scorers in one message (one per area, each given `rubric.md`'s intro, "How to score", and its own area's section plus the repo path, never another area's section or score; the errors scorer runs the 02 trace), fill `scorecard.md`, run `delta.py` and `check_scorecard.py --repo <target>`, write `scorecards/<date>.md`.
 
 **Check:** on the target repo, after `claude -p "/codebase-rubric"`: `git status --porcelain` lists only the new scorecard; `check_scorecard.py` exits 0 on it; the run asked no questions. Then the user spot-checks three scores in under a minute each (the success test).
 

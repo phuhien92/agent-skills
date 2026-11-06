@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Check that a codebase scorecard follows the contract in ../scorecard.md.
 
-Usage: check_scorecard.py <scorecard.md>
+Usage: check_scorecard.py <scorecard.md> [--repo <path>]
+
+With --repo, every cited `path:line` must exist in that repo: the file is
+there and the line is within its length.
 
 Exits 0 when the scorecard is valid. Exits 1 and prints one reason per line
 when it isn't. Exits 2 if the file can't be read. Standard library only.
@@ -20,6 +23,8 @@ CITATION = re.compile(r"`[^`\s]+:\d+(?:-\d+)?`")
 SAMPLE = re.compile(r"^(\d+) of (\d+)$")
 TIERS = {"over target (500)": (500, 800), "over soft (800)": (800, 1000), "over hard (1000)": (1000, None)}
 NOT_SCORED = "not scored"
+MIN_SCORED = 3
+CITE_PARTS = re.compile(r"`([^`\s]+):(\d+)(?:-(\d+))?`")
 
 
 class ContractError(Exception):
@@ -59,7 +64,27 @@ def parse(text: str) -> dict:
             "delta": section(text, "delta")}
 
 
-def problems(text: str) -> list[str]:
+def citation_problems(text: str, repo: Path) -> list[str]:
+    data = parse(text)
+    cited = " ".join(r.get("evidence", "") for r in data["scores"]) + " " + " ".join(data["trace"])
+    found, seen = [], set()
+    for path, start, end in CITE_PARTS.findall(cited):
+        if (path, start, end) in seen:
+            continue
+        seen.add((path, start, end))
+        target = repo / path
+        if not target.is_file():
+            found.append(f"citation: `{path}` is not a file in {repo}")
+            continue
+        with target.open("rb") as fh:
+            length = sum(1 for _ in fh)
+        last = int(end or start)
+        if int(start) < 1 or last > length:
+            found.append(f"citation: `{path}:{start}{'-' + end if end else ''}` is past the end ({length} lines)")
+    return found
+
+
+def problems(text: str, repo: Path | None = None) -> list[str]:
     found = []
     for name in SECTIONS:
         try:
@@ -117,6 +142,10 @@ def problems(text: str) -> list[str]:
         if not scope or scope == "-":
             found.append(f"scores: {area} names no scope")
 
+    scored = sum(1 for r in data["scores"] if r.get("score", "").strip().lower() != NOT_SCORED)
+    if scored < MIN_SCORED:
+        found.append(f"scores: only {scored} areas scored; at least {MIN_SCORED} must be")
+
     if errors_scored:
         hops = data["trace"]
         if len(hops) < 2:
@@ -124,19 +153,32 @@ def problems(text: str) -> list[str]:
         for hop in hops:
             if not CITATION.match(re.sub(r"^\d+\.\s*", "", hop)):
                 found.append(f"trace: hop does not start with `path:line`: {hop[:60]}")
+    if repo is not None and not found:
+        found += citation_problems(text, repo)
     return found
 
 
 def main(argv: list[str]) -> int:
+    repo = None
+    if "--repo" in argv:
+        i = argv.index("--repo")
+        if i + 1 >= len(argv):
+            print("usage: check_scorecard.py <scorecard.md> [--repo <path>]", file=sys.stderr)
+            return 2
+        repo = Path(argv[i + 1])
+        argv = argv[:i] + argv[i + 2:]
+        if not repo.is_dir():
+            print(f"check_scorecard: --repo {repo} is not a directory", file=sys.stderr)
+            return 2
     if len(argv) != 1:
-        print("usage: check_scorecard.py <scorecard.md>", file=sys.stderr)
+        print("usage: check_scorecard.py <scorecard.md> [--repo <path>]", file=sys.stderr)
         return 2
     try:
         text = Path(argv[0]).read_text(encoding="utf-8")
     except OSError as err:
         print(f"check_scorecard: can't read {argv[0]}: {err}", file=sys.stderr)
         return 2
-    found = problems(text)
+    found = problems(text, repo)
     for p in found:
         print(p)
     if not found:

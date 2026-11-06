@@ -4,7 +4,7 @@
 Usage: size_report.py <repo> [--json]
 
 Counts raw newlines in every code file git tracks (or every file under <repo>
-when it isn't a git repo). Skips non-code files (docs, data, images), lockfiles,
+when it isn't a git repo). Skips non-code files (docs, data, images; styles and markup count as code), lockfiles,
 node_modules/ and vendor/ at any depth, dist/ and build/ at the repo root or a
 package root, files git marks linguist-generated or linguist-vendored, files
 whose first lines say they are generated, and binary files. Every listed path
@@ -41,6 +41,7 @@ CODE_EXTENSIONS = {
     ".pm", ".r", ".jl", ".hs", ".ml", ".mli", ".elm", ".vue", ".svelte",
     ".astro", ".sh", ".bash", ".zsh", ".fish", ".ps1", ".sql", ".graphql",
     ".proto", ".zig", ".nim", ".v", ".sv", ".vhd", ".tf", ".hcl",
+    ".css", ".scss", ".sass", ".less", ".html", ".htm", ".mdx",
 }
 CODE_NAMES = {"Makefile", "Dockerfile", "Rakefile", "Justfile"}
 # Stable keys for --json; phrases for the text table.
