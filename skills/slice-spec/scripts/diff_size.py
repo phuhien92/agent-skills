@@ -16,8 +16,10 @@ Standard library only. Needs git 2.17 or later.
 """
 from __future__ import annotations
 
+import os
 import re
 import subprocess
+import tempfile
 from pathlib import PurePosixPath
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -89,9 +91,9 @@ class FileCount:
         return self.new_path or self.old_path or ""
 
 
-def git(repo: Path, *args: str, check: bool = True) -> str:
+def git(repo: Path, *args: str, check: bool = True, env: dict[str, str] | None = None) -> str:
     try:
-        done = subprocess.run(["git", "-C", str(repo), *args], capture_output=True)
+        done = subprocess.run(["git", "-C", str(repo), *args], capture_output=True, env=env)
     except FileNotFoundError:
         raise DiffSizeError("git is not installed") from None
     if check and done.returncode != 0:
@@ -235,37 +237,35 @@ def parse(text: str) -> list[FileCount]:
 
 
 def diff_text(repo: Path, base: str, head: str, pathspecs: list[str] | None = None,
-              literal: bool = False) -> str:
+              env: dict[str, str] | None = None) -> str:
     """Coloured diff of base..head. Moves are matched only among the files diffed, so
     pass pathspecs to keep non-product files (build output, say) from supplying moves."""
     config: list[str] = []
     for key, value in PINNED_CONFIG.items():
         config += ["-c", f"{key}={value}"]
-    if literal:
-        config.insert(0, "--literal-pathspecs")
     tail = ["--", *pathspecs] if pathspecs else []
-    return git(repo, *config, "diff", *DIFF_FLAGS, base, head, *tail)
+    return git(repo, *config, "diff", *DIFF_FLAGS, base, head, *tail, env=env)
 
 
-def line_count(repo: Path, commit: str, path: str) -> int:
+def line_count(repo: Path, commit: str, path: str, env: dict[str, str] | None = None) -> int:
     blob = subprocess.run(["git", "-C", str(repo), "cat-file", "-p", f"{commit}:{path}"],
-                          capture_output=True).stdout
+                          capture_output=True, env=env).stdout
     if not blob:
         return 0
     return blob.count(b"\n") + (0 if blob.endswith(b"\n") else 1)
 
 
-def count_range(repo: Path, base: str, head: str,
-                pathspecs: list[str] | None = None, literal: bool = False) -> list[FileCount]:
-    """Per-file counts for `base..head` diffed at once, limited to pathspecs if given
-    (taken as literal paths when `literal`)."""
-    files = parse(diff_text(repo, base, head, pathspecs, literal))
+def count_range(repo: Path, base: str, head: str, pathspecs: list[str] | None = None,
+                env: dict[str, str] | None = None) -> list[FileCount]:
+    """Per-file counts for `base..head` diffed at once, limited to pathspecs if given.
+    `base` and `head` may be any tree-ish; `env` lets git find temporary objects."""
+    files = parse(diff_text(repo, base, head, pathspecs, env))
     for f in files:
         if f.old_path and f.new_path and f.old_path != f.new_path:
             # A rename: the lines it kept moved with it. Edited lines are already in the
             # hunks; what the hunks don't show was carried over unchanged.
-            f.moved += line_count(repo, head, f.new_path) - f.new - f.moved
-            f.moved_out += line_count(repo, base, f.old_path) - f.deleted - f.moved_out
+            f.moved += line_count(repo, head, f.new_path, env) - f.new - f.moved
+            f.moved_out += line_count(repo, base, f.old_path, env) - f.deleted - f.moved_out
     return files
 
 
@@ -462,9 +462,11 @@ def changed_files(repo: Path, base: str, head: str) -> list[tuple[str | None, st
 
 @dataclass
 class Filtered:
-    paths: list[str]                                       # product paths, both sides
+    paths: list[str]                                       # product paths, either side
     skipped: dict[str, int] = field(default_factory=dict)  # reason -> changed files
     attrs_from_worktree: bool = False
+    drop_old: list[str] = field(default_factory=list)      # changed old sides that aren't product
+    drop_new: list[str] = field(default_factory=list)      # changed new sides that aren't product
 
 
 def product_paths(repo: Path, base: str, head: str) -> Filtered:
@@ -494,8 +496,12 @@ def product_paths(repo: Path, base: str, head: str) -> Filtered:
         new_ok = new is not None and reasons[("new", new)] is None
         if old_ok:
             keep.add(old)
+        elif old is not None:
+            result.drop_old.append(old)
         if new_ok:
             keep.add(new)
+        elif new is not None:
+            result.drop_new.append(new)
         if not (old_ok or new_ok):
             reason = reasons[("new", new)] if new is not None else reasons[("old", old)]
             result.skipped[reason] = result.skipped.get(reason, 0) + 1
@@ -503,18 +509,57 @@ def product_paths(repo: Path, base: str, head: str) -> Filtered:
     return result
 
 
+def toplevel(repo: Path) -> Path:
+    out = git(repo, "rev-parse", "--show-toplevel").strip()
+    return Path(out)
+
+
+def scratch_env(repo: Path, objects: Path) -> dict[str, str]:
+    """An environment where new git objects land in `objects`, a temporary folder, while
+    the repo's own objects (and its alternates) stay readable. Nothing is written to the
+    repo."""
+    own = Path(git(repo, "rev-parse", "--git-path", "objects").strip())
+    own = own if own.is_absolute() else (repo / own)
+    alternates = [str(own.resolve())]
+    info = own / "info" / "alternates"
+    if info.is_file():
+        alternates += [line.strip() for line in info.read_text().splitlines()
+                       if line.strip() and not line.startswith("#")]
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    env.update(GIT_OBJECT_DIRECTORY=str(objects), GIT_ALTERNATE_OBJECT_DIRECTORIES=os.pathsep.join(alternates),
+               GIT_INDEX_FILE=str(objects.parent / "index"))
+    return env
+
+
+def pruned_tree(repo: Path, treeish: str, drop: list[str], env: dict[str, str]) -> str:
+    """`treeish` with the `drop` paths removed, written as a temporary tree object."""
+    if not drop:
+        return git(repo, "rev-parse", f"{treeish}^{{tree}}", env=env).strip()
+    git(repo, "read-tree", treeish, env=env)
+    done = subprocess.run(["git", "-C", str(repo), "update-index", "--force-remove", "-z", "--stdin"],
+                          input="\0".join(drop).encode("utf-8", "surrogateescape"),
+                          capture_output=True, env=env)
+    if done.returncode != 0:
+        raise DiffSizeError(done.stderr.decode("utf-8", "replace").strip())
+    return git(repo, "write-tree", env=env).strip()
+
+
 def count_product(repo: Path, base: str, head: str) -> tuple[list[FileCount], Filtered]:
-    """Counts for product code only. Non-product files are left out of the diff itself,
-    so they can't supply moves (a src/ line never counts as moved from dist/)."""
+    """Counts for product code only.
+
+    Each side is judged on its own: a side that isn't product code is removed from a
+    temporary copy of its tree, and the two copies are diffed. So a skipped side adds
+    no lines and supplies no moves (a src/ line never counts as moved from dist/), and
+    no path list is passed to git, whatever the size of the commit."""
+    repo = toplevel(repo)
     filtered = product_paths(repo, base, head)
     if not filtered.paths:
         return [], filtered
-    files = count_range(repo, base, head, filtered.paths, literal=True)
-    keep = set(filtered.paths)
-    for f in files:
-        # A side outside the product set (say, a rename out of dist/) contributes nothing.
-        if f.new_path not in keep:
-            f.new = f.moved = 0
-        if f.old_path not in keep:
-            f.deleted = f.moved_out = 0
+    with tempfile.TemporaryDirectory(prefix="diff-size-") as tmp:
+        objects = Path(tmp) / "objects"
+        objects.mkdir()
+        env = scratch_env(repo, objects)
+        base_tree = pruned_tree(repo, base, filtered.drop_old, env)
+        head_tree = pruned_tree(repo, head, filtered.drop_new, env)
+        files = count_range(repo, base_tree, head_tree, env=env)
     return files, filtered

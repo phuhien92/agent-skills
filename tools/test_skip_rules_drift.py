@@ -52,5 +52,26 @@ class SkipRulesDriftTest(unittest.TestCase):
                                  self.size_report.skip_reason(ROOT / "no-such-dir", path, head, set()))
 
 
+    def test_build_folder_rule_agrees(self):
+        import tempfile
+        cases = ["dist/a.js", "build/a.js", "pkg/build/a.js", "pkg/dist/a.js", "tools/build/a.py",
+                 "a/node_modules/b.js", "a/vendor/b.py", "src/a.py"]
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "pkg").mkdir()
+            (Path(tmp) / "pkg" / "package.json").write_text("{}")
+            tree = {"pkg/package.json"}
+            for path in cases:
+                with self.subTest(path=path):
+                    self.assertEqual(self.diff_size.in_build_dir(tree, path),
+                                     self.size_report.in_build_dir(Path(tmp), path))
+
+    def test_marked_rule_agrees(self):
+        marked = {"gen/a.py"}
+        for path in ["gen/a.py", "src/a.py"]:
+            with self.subTest(path=path):
+                self.assertEqual(self.diff_size.skip_reason(path, b"x\n", marked, set()),
+                                 self.size_report.skip_reason(ROOT / "no-such-dir", path, b"x\n", marked))
+
+
 if __name__ == "__main__":
     unittest.main()
