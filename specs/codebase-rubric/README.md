@@ -46,9 +46,6 @@ Build order comes from **Depends on**. 01 and 04 can start in parallel; 02 and 0
 
 - **Where is the screenshot from?** **Recommended:** link the source in `rubric.md` for credit. The user provides it; not blocking.
 
-- **Tie rule wording.** Both spikes read "pick the lower one" differently (lower anchor vs lower score), and a strict reading leaves no room for a 2 or 4. **Recommended:** reword to "pick the lower anchor; a 4 needs the 5 anchor to fit most of the repo, a 2 needs the 1 anchor to fit most of it." Changes the approved `rubric.md`, so the user decides before 07.
-- **Do the anchors separate repos?** The scoring spike gave brain-cli four 3s. **Recommended:** score a second, different repo by hand before 07; if it also lands on all 3s, sharpen the anchors. The user picks the repo.
-
 ## Decided in planning
 
 - **Prove the hard part by hand first (02, 03).** If an agent can't produce evidence a person checks in under a minute, the scripts are wasted. From the fail-fast draft; the lean draft tested this last, which risks building everything before learning it fails.
@@ -61,10 +58,12 @@ Build order comes from **Depends on**. 01 and 04 can start in parallel; 02 and 0
 - Drafts were independent: three subagents with lean, fail-fast, and seams lenses.
 - **`rubric.md` approved as written** by the user (2026-11-06), including its "How to score" rules (evidence before score; on a tie, take the lower score and say what would earn the higher). Those rules count as settled for 07.
 - **Size rules settled by the user after the first ledger:** `node_modules/` and `vendor/` skipped at any depth, `dist/` and `build/` only at the repo root or a package root, no `third_party/`; **code files only** (docs, data, and images count as "not code"; this was not the recommended option); JSON skip keys are stable slugs; and **no pull request from this branch until 08**, keeping the `validate.py` check as written.
+- **Tie rule reworded, approved by the user:** "pick the lower anchor; a 4 needs the 5 anchor to fit most of the repo, a 2 needs the 1 anchor to fit most of it."
+- **Second repo for separation, approved by the user: [phuhien92/keen-design-system](https://github.com/phuhien92/keen-design-system).** A component library with no code file over 500 lines, the opposite shape of brain-cli. If it also scores all 3s, sharpen the anchors before 07.
 - **Target repo: [phuhien92/brain-cli](https://github.com/phuhien92/brain-cli) at `7045e68`** (user's choice). It has three source files over 500 lines (`src/cli.ts` 1,692, `test/extensions.test.ts` 997, `src/extensions.ts` 540) and two files the skip rules must catch (`dist/src/cli.js` 1,579, a PNG under `assets/`). The session clone is read-only, so scorecards stay local.
 
 ## Next agent prompt
 
-Status: 01 approved; 04 built with the user's size rules. 02 and 03 ran on brain-cli; outputs in `spikes/`, waiting for the user's checks (follow the trace hops; time three scores). Two open questions above before 07. Next after the checks: 05 (scorecard contract, fixtures from `spikes/`).
+Status: 01 approved (tie rule reworded); 04 built. 02 and 03 ran on brain-cli (outputs in `spikes/`), waiting for the user's checks. Separation check on keen-design-system running (`spikes/03b-scores-keen.md`). Next: 05.
 
 Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.

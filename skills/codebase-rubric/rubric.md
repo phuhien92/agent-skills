@@ -9,7 +9,7 @@ The five areas and the size tiers (target 500, soft 800, hard 1,000 lines) come 
 1. Read the anchors for the area.
 2. Find evidence first, then pick the score it supports. Never pick a score and go looking for evidence.
 3. Cite the strongest evidence for the score, and one counter-example if the repo is mixed.
-4. When two anchors both fit, pick the lower one and say what would earn the higher.
+4. When two anchors both fit, pick the lower anchor and say what would earn the higher. A 4 needs the 5 anchor to fit most of the repo; a 2 needs the 1 anchor to fit most of it.
 
 ## Architecture
 
