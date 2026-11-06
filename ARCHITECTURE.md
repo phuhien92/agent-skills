@@ -20,7 +20,7 @@ This pack does not build the factory. It ships the **blocks** a factory calls at
 | Intent | `hien`, `brain` | have |
 | Map, Slice | `slice-spec` | have; writes the spec that Build and Decide read |
 | Build | the harness's own workers | not ours |
-| Verify | the "agents check before the human reviews" rule in `AGENTS.md` | rule, not yet a block |
+| Verify | `codebase-rubric`, plus the "agents check before the human reviews" rule in `AGENTS.md` | have; a periodic scorecard, not a per-change gate |
 | Decide | `decision-checker` | have; first block that runs as a gate |
 | Learn | `brain` stores lessons | half: nothing feeds them back yet |
 | (the human) | `behavioral-story-depth`, `radio-system-design-practice` | have; human-facing on purpose |
@@ -112,6 +112,14 @@ CI: `.github/workflows/validate.yml` runs the validator on every push and PR.
 ## Decisions log
 
 Newest first. Each entry says what we decided, why, what we turned down, where it can fail, and when to revisit it.
+
+### 2026-11-06: `codebase-rubric` is the Verify block
+
+- **Decision:** a periodic health check that writes `scorecards/<date>.md`: a size table (500, 800, 1,000 lines), five areas scored 1-5 by five independent scorers with `path:line` evidence, one failure traced end to end, and the change since the last scorecard. Three standard-library scripts own the mechanics (`size_report.py`, `check_scorecard.py --repo`, `delta.py`); agents own the judgment. Built from the spec in `specs/codebase-rubric/`, the first spec written by `slice-spec`.
+- **Why:** the size tiers and five areas came from a rubric the user shared. Size is report only; enforcement is left to adopting dzhng's `ratchet-files` later. One scorer per area, because a single scorer gave every area the same score on two repos (all 3s, then all 4s); five independent scorers gave keen-design-system 4, 4, 3, 4, 3 and brain-cli 4, 3, 3, 3, 4, each from a counted sample.
+- **Turned down:** blocking commits (a second gate on every change), running live failures (slow and fragile across repos), and one scorer for all areas (one impression leaks across all five).
+- **Where it can fail:** about five scorers' worth of tokens per run; scores rest on samples, so a different sample can move a score by one; git history that is squashed limits the Modularity evidence (folder layout stands in). Three `decision-checker` ledgers during the build found 17 unsound calls, all fixed; the user made 14 calls along the way.
+- **Revisit when:** a repo's second scorecard shows whether the delta catches real change, or scores swing by more than one between runs with no code change.
 
 ### 2026-11-06: `slice-spec` is the second factory block
 

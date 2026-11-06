@@ -62,11 +62,12 @@ Build order comes from **Depends on**. 01 and 04 can start in parallel; 02 and 0
 - **Second repo for separation, approved by the user: [phuhien92/keen-design-system](https://github.com/phuhien92/keen-design-system).** A component library with no code file over 500 lines, the opposite shape of brain-cli. If it also scores all 3s, sharpen the anchors before 07.
 - **One fresh scorer per area, approved by the user.** The keen-design-system check scored all five areas 4, and brain-cli scored four 3s: each scorer carried one impression across every area. A scorer that sees only its own area can't. The rubric also gains "not scored" (too little code, with scope named) and "most" as at least two-thirds of a listed sample. Costs about five scorers per run, acceptable for a periodic check.
 - **After the second ledger, the user decided:** at least three areas must be scored; CSS, SCSS, Less, HTML and MDX count as code; the checker verifies citations against the repo with `--repo`. The user also approved three planner calls: sample at least six units ("not scored" under three), the one-agent fallback marked "Scorers independent: no", and folder layout standing in for git history in the Modularity 5 anchor.
+- **Success test (07) accepted by the user** on the brain-cli scorecard (2026-11-06).
 - **Slices 02 and 03 accepted by the user** on the evidence (2026-11-06) without a hand re-check: the trace was spot-checked hop by hop by the planner, and two scoring citations were confirmed.
 - **Target repo: [phuhien92/brain-cli](https://github.com/phuhien92/brain-cli) at `7045e68`** (user's choice). It has three source files over 500 lines (`src/cli.ts` 1,692, `test/extensions.test.ts` 997, `src/extensions.ts` 540) and two files the skip rules must catch (`dist/src/cli.js` 1,579, a PNG under `assets/`). The session clone is read-only, so scorecards stay local.
 
 ## Next agent prompt
 
-Status: 01 to 07 built; 31 script tests pass. 07 ran on brain-cli at `7045e68` exactly as SKILL.md says: five independent scorers in parallel, then the template, delta, and `check_scorecard.py --repo` (prints `ok`). Scores 4, 3, 3, 3, 4; copy in `spikes/07-brain-cli-scorecard.md`. Waiting on the user's spot check of three scores (the success test). Then 08 (wiring, evals, CI) turns `validate.py` green.
+Status: all eight slices built. 08 wired the skill (commands, Cursor link, README, AGENTS, manifests, evals), added the script tests to CI, and recorded the Verify block in ARCHITECTURE.md. Ready for close-out: a final decision-checker pass, then a PR when the user asks.
 
 Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.

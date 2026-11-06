@@ -39,6 +39,7 @@ Your time goes into the facts in step 1 and the answers in steps 2 to 4. The ski
 - **"Did I already decide this?"** `/brain` searches your notes before the agent answers from general knowledge.
 - **One story keeps collapsing.** `/behavioral-story-depth` in Drill mode on just that story.
 - **A feature is too big to hand over.** `/slice-spec` interviews you, then writes a spec of small slices with a pass/fail check each. Agents build from it; `/decision-checker` audits against it.
+- **Is this codebase getting better or worse?** `/codebase-rubric` writes a dated scorecard with evidence you can check in under a minute, and shows what changed since the last one.
 - **An agent just finished a change.** `/decision-checker` lists the calls it made where your prompt was silent, least confident first. Review that instead of the diff.
 
 ## Quick start
@@ -67,6 +68,7 @@ npx skills add phuhien92/agent-skills --skill radio-system-design-practice
 npx skills add phuhien92/agent-skills --skill behavioral-story-depth
 npx skills add phuhien92/agent-skills --skill slice-spec
 npx skills add phuhien92/agent-skills --skill decision-checker
+npx skills add phuhien92/agent-skills --skill codebase-rubric
 npx skills add phuhien92/agent-skills --skill brain   # needs the brain CLI: npm install -g github:phuhien92/brain-cli
 ```
 
@@ -78,6 +80,12 @@ npx skills add phuhien92/agent-skills --skill brain   # needs the brain CLI: npm
 |---|---|---|
 | [behavioral-story-depth](skills/behavioral-story-depth/SKILL.md) | Turns a real story into a 75 to 90 second opener plus a deep Actions layer that survives about five minutes of probing. Maps stories to Amazon LPs and drills follow-ups. | "Tell me about a time…" prep, Amazon LP loops, a story that collapses on follow-up |
 | [radio-system-design-practice](skills/radio-system-design-practice/SKILL.md) | Coaches RADIO (Requirements, Architecture, Data model, Interfaces, Optimizations). Hidden rubric, one question, score, lock, next. | System design practice, news feed / autocomplete / docs / chat, `@solution.md` or an Excalidraw board |
+
+### Verify: measure what the factory built
+
+| Skill | What it does | Use when |
+|---|---|---|
+| [codebase-rubric](skills/codebase-rubric/SKILL.md) | Writes a scorecard: files over 500, 800, and 1,000 lines, plus a 1-5 score for architecture, modularity, abstraction, components, and errors. Five independent scorers, every score backed by `path:line`, one failure traced end to end, and the change since the last scorecard. | A periodic health check, before a big refactor, or to see whether the codebase is drifting |
 
 ### Build: check what the factory decided
 
@@ -117,10 +125,15 @@ agent-skills/
 │   │   ├── ledger.md
 │   │   ├── harness.md
 │   │   └── hooks/require-ledger.sh
-│   └── slice-spec/
+│   ├── slice-spec/
+│   │   ├── SKILL.md
+│   │   ├── spec-format.md
+│   │   └── drafting.md
+│   └── codebase-rubric/
 │       ├── SKILL.md
-│       ├── spec-format.md
-│       └── drafting.md
+│       ├── rubric.md
+│       ├── scorecard.md
+│       └── scripts/           # size_report, check_scorecard, delta, and their tests
 ├── .claude/commands/          # Claude Code slash commands
 ├── .cursor/skills/            # Cursor: symlink to skills/
 ├── commands/                  # Extra slash-command copies
