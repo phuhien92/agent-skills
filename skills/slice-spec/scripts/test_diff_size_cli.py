@@ -100,7 +100,42 @@ class CliTest(unittest.TestCase):
         self.repo.write("src/p.py", new_lines(1, "p"))
         self.repo.commit("a | b")
         text = run(str(self.repo.root), f"{self.base}..HEAD")[1]
-        self.assertIn("a \\| b", text)
+        self.assertIn("a &#124; b", text)
+        row = [line for line in text.splitlines() if "a &#124; b" in line][0]
+        self.assertEqual(row.count("|"), 7)
+
+    def test_whole_range_starts_at_the_merge_base(self):
+        self.repo.write("src/big.py", new_lines(900, "big"))
+        fork = self.repo.commit("big file on main")
+        self.repo.run("checkout", "-q", "-b", "feat")
+        self.add(20, "feat")
+        self.repo.run("checkout", "-q", "main")
+        self.repo.run("rm", "-q", "src/big.py")
+        self.repo.commit("main drops the big file")
+        code, out, _ = run(str(self.repo.root), "main..feat", "--json")
+        data = json.loads(out)
+        self.assertEqual((code, data["total"]["new"], data["total"]["deleted"]), (0, 20, 0))
+        self.assertEqual(data["total"]["base"], fork[:7])
+        text = run(str(self.repo.root), "main..feat")[1]
+        self.assertIn("is not an ancestor", text)
+        self.assertNotIn("split the goal", text)
+
+    def test_warnings_and_notes_are_separate_lists(self):
+        self.add(801, "w")
+        text = run(str(self.repo.root), f"{self.base}..HEAD")[1]
+        warn, notes = text.index("**Warnings**"), text.index("**Notes**")
+        self.assertLess(warn, notes)
+        self.assertIn("\n\n**Notes**\n\n- ", text)
+
+    def test_shallow_boundary_is_flagged(self):
+        self.add(3, "s1")
+        self.add(3, "s2")
+        with tempfile.TemporaryDirectory() as clone:
+            self.repo.run("clone", "-q", "--depth", "1", f"file://{self.repo.root}", clone)
+            code, out, _ = run(clone, "HEAD", "--json")
+            row = json.loads(out)["commits"][0]
+            self.assertEqual((code, row["parent_missing"]), (0, True))
+            self.assertIn("shallow clone", run(clone, "HEAD")[1])
 
     def test_bad_input_exits_2(self):
         cases = [(str(self.repo.root), "no-such..HEAD"), (str(self.repo.root), "nope"),

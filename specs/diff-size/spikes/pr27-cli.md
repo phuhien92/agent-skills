@@ -23,6 +23,10 @@ Change size for `7045e68..f6f554a`
 
 Skipped files: not a code file: 54, vendored or build folder: 23
 
+**Notes**
+
 - Product code only, with codebase-rubric's skip rules.
 - Moved lines ignore indentation changes. A moved line shorter than git's block floor (20 letters and digits) counts as new, so new leans high.
 - The commit rows find moves inside each commit; the whole-range row finds moves across the range, so its new count can be lower than the rows' sum.
+- The whole-range row starts where the branch left the base (their merge base), as a PR does.
+- Deleted leaves out moved-out lines; a moved block shows only under Moved.

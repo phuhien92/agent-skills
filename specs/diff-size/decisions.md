@@ -374,3 +374,106 @@ Trivial calls folded: the `Side` and `Filtered` record shapes, skip reasons keye
 ## Next step
 
 Rebuild `product_paths()` and `count_product()` around sides instead of paths, with one temp-repo test for each case in the first two unsound entries, and make the filter work from a subfolder. Then put the two needs-you calls in front of the user before slice 04 starts. Three of the eight entries come from one gap: the slice judges sides, but the diff works on files. Settle in the spec what the unit is: a file, a side, or a line.
+
+# Check 4: slice 04 report and CLI
+
+- **Scope:** commit `bee2fab` on `claude/diff-size`: the "Report and CLI (slice 04)" section and the module docstring of `skills/slice-spec/scripts/diff_size.py`, `test_diff_size_cli.py`, `spikes/pr27-cli.md`, and the README status. Also, briefly, whether `57d7830` (the slice 03 fixes) resolves Check 3.
+- **Baseline:** `specs/diff-size/README.md`, `slices/04-report-cli.md`, and the slice 01 gate decisions above. Run by another workflow with no user present (rule 7): every confidence is capped at medium. Check 1 to 3 entries the code did not change are not relisted.
+- **Self-report:** missing beyond the commit message, the README prompt and `spikes/pr27-cli.md`, so this ledger rests on an independent trace and throwaway probes in temp repos outside this repo.
+- **Tests:** `python3 -m unittest discover -s skills/slice-spec/scripts` passes (44). `tools/test_skip_rules_drift.py` passes (5). codebase-rubric's tests pass (36). `python3 tools/validate.py` passes (7 skills, 0 errors). git 2.43. The slice's last check, the user's spot-check of `138fb64`, is still open; the README says so.
+
+## Reproduction on brain-cli
+
+`diff_size.py /home/user/brain-cli 7045e68..f6f554a` exits 0 and prints, byte for byte, the table in `spikes/pr27-cli.md`, twice in a row. The rows match `pr27.md`'s indent-insensitive column except where the filter explains it (`golden.sh` now counts; `deleted` no longer holds moved-out lines). The slice's own range, `ea9b3ed~1..f6f554a`, gives 408 new for the whole range, over target. brain-cli's status stays clean, its object count stays 260 and `git fsck` is clean; the run only refreshed the timestamps of 5 tree objects that already existed (git's `write-tree` does this when an object is already present).
+
+## Check 3's fixes (`57d7830`)
+
+All five unsound entries are resolved. Each has a temp-repo test, and probes agree: from a subfolder the counts match the root, a 40,000-file commit counts 40,000 new in 24 s with exit 0, and deleting the package-root branch or the marked-generated rule from a copy of `diff_size.py` now fails the drift test. Check 3's two needs-you entries (skip counts per file, not per side; the user's attributes file) are unchanged in the code and still wait on the user.
+
+## Check these first
+
+1. The whole-range row diffs from A, not from where the branch started.
+2. A shallow clone's oldest commit is sized as if it added the whole repo.
+3. Warnings and notes render as one markdown list.
+
+## Needs you
+
+### A merge commit's row counts the lines the merge brought in
+
+- **When:** `bee2fab`, `report()` sizes every first-parent commit against its first parent, using `commits_in()` from `0945449`.
+- **Slice:** 04
+- **What happens now:** a feature branch adds 20 lines, then merges `main`, which had added 300 lines meanwhile. `diff_size.py . main..feat` prints the feature commit at 20 new and the merge row at 300 new, while the whole-range row says 20. With a bigger `main`, the merge row would cross soft and say "consider Reslice" about code this PR didn't write. The obvious alternative shows merge rows without a tier (or sizes only what the merge itself changed, such as conflict fixes), so the table's rows describe the PR's own work.
+- **The gap:** Check 2 recommended `--first-parent` and said the merge rule should be decided in 04's spec. The spec was never updated, so what a merge row means was never decided.
+- **Reach:** any branch kept up to date by merging `main` gets false Reslice warnings in the table a worker pastes into the PR.
+- **Verdict:** needs-you. Which rows a PR table shows, and which get tiers, is a reporting call. **Recommended call:** list merge commits with their counts but no tier, and say so in the notes. **To reverse:** tier merge rows like any other row, as now.
+- **Confidence:** medium.
+
+### The output never says what "Deleted" leaves out
+
+- **When:** `bee2fab`, `as_text()` and `NOTES`.
+- **Slice:** 04
+- **What happens now:** the table's Deleted column is removed lines that are not moves; moved-out lines appear only in `--json` (`moved_out`). For #27's `138fb64`, the table says 63 deleted where `git diff --stat` and slice 01's spike say 532. Nothing in the printed notes says this. Check 2 and Check 3 each left a needs-you whose recommended call was to explain it (and the skip counts) in 04's output note. The worker wrote the explanation into `spikes/pr27-cli.md` but not into the tool's output.
+- **The gap:** those two calls are still open, and the slice says nothing about what each column means.
+- **Reach:** a reviewer comparing the pasted table with GitHub's numbers sees a large mismatch with no explanation.
+- **Verdict:** needs-you. It follows calls the user hasn't answered. **Recommended call:** keep the definitions and add one note line: "Deleted is removed lines that are not moves; skipped counts are files with no product-code side." **To reverse:** delete the line.
+- **Confidence:** medium.
+
+## Unsound
+
+### The whole-range row diffs from A, not from where the branch started
+
+- **When:** `bee2fab`, `report()` runs `count_product(repo, A, B)` for `A..B`.
+- **Slice:** 04
+- **What happens now:** a branch off `main` adds 20 lines. Meanwhile `main` deletes a 900-line file. `diff_size.py . main..feat` prints the one commit at 20 new, then the whole-range row at **920 new, over soft (800): split the goal**, exit 0. The 900 lines are `main`'s deletion, read backwards. If `main` instead adds 300 lines, the range shows 300 deleted. A reversed range (`HEAD..<an older commit>`) gives no rows and a whole range of 0 new / 320 deleted, with no error. The rows (from `git rev-list A..B`) and the whole range (A's tree against B's) describe different changes whenever A isn't an ancestor of B. The obvious alternative diffs from the merge base of A and B, which is what GitHub's PR diff shows and what slice 01's spike did (`7045e68` is the merge base).
+- **The gap:** the slice says "the whole range diffed at once" but doesn't say from which commit. "A..B" in git means "commits in B not in A", which is the merge base reading, not A's tree.
+- **Reach:** `main..HEAD` is the natural command for a PR, and `main` usually moves on. The tiered PR number, and the "split the goal" warning, can be wrong by whatever `main` changed.
+- **Verdict:** unsound. The PR total stops measuring the PR. **Redo from:** the whole-range row covers exactly the changes the listed commits bring in (merge base of A and B, to B), and a test advances `main` with both an addition and a deletion after the branch point.
+- **Confidence:** low.
+
+### A shallow clone's oldest commit is sized as if it added the whole repo
+
+- **When:** `bee2fab`, `report()` uses `parent()`, which falls back to the empty tree when `^1` doesn't resolve.
+- **Slice:** 04
+- **What happens now:** in a `git clone --depth 1`, `diff_size.py . HEAD` sizes the commit against the empty tree: a merge that changed 300 lines shows 330 new, exit 0, no warning. The same fallback is right for a true root commit, but in a shallow clone the parent exists and was just not fetched. The obvious alternative tells the two apart (git lists cut-off commits in `.git/shallow`, and `git rev-parse --is-shallow-repository` says whether there are any) and exits 2 with "fetch more history".
+- **The gap:** the non-goals say exit 2 only on bad input. They don't say whether missing history is bad input.
+- **Reach:** CI checkouts are shallow by default, and slice 05 wires this into worker runs and CI.
+- **Verdict:** unsound. A valid-looking run gives a wrong number silently. **Redo from:** a commit whose parent was cut off by a shallow clone is never sized against the empty tree; the script exits 2 and names the commit. Add a test with `--depth 1`.
+- **Confidence:** medium.
+
+### Warnings and notes render as one markdown list
+
+- **When:** `bee2fab`, `as_text()` puts the warnings list, a blank line, then the notes list.
+- **Slice:** 04
+- **What happens now:** when any warning prints, GitHub-flavoured markdown joins the two lists, because two lists split only by a blank line are one list. Rendered with `pandoc -f gfm`, "Warnings:" is followed by four bullets: the real warning, then the three notes as if they were warnings too. #27 has no warning, so its spike output renders fine and the tests never render anything. Separately, `cell()` escapes `|` but not a backslash, so a subject containing `\|` becomes `\\|`, which ends the cell and shifts the row's columns. The obvious alternative gives the notes their own heading or a non-list form, and escapes backslashes before pipes.
+- **The gap:** the README says the agent pastes the output into the PR description. Nothing said it must render as written.
+- **Reach:** every PR over soft shows notes as warnings in the description reviewers read.
+- **Verdict:** unsound. The pasted text says something the tool didn't mean. **Redo from:** each block of the output (title, table, skipped line, warnings, notes) renders as its own block in GitHub-flavoured markdown, and every cell round-trips any subject. Add a test that renders the warning case and a subject with `\|`.
+- **Confidence:** medium.
+
+## Sound
+
+### The PR total is the whole range diffed at once, tiered on the same numbers
+
+- **When:** `bee2fab`, `report()` and `warnings()`.
+- **Slice:** 04
+- **What happens now:** for `A..B` the table ends with a bold "Whole range, diffed at once" row with its own tier. Over soft or hard, it adds "split the goal". A note says the rows find moves inside each commit and the range finds them across it, so its new count can be lower than the rows' sum. One commit gets no whole-range row, since it would repeat the commit row. An empty range (`HEAD..HEAD`) prints a 0 row. These follow the slice's "Decided" list, except for the base commit (above).
+- **The gap:** the slice decided the numbers, not the one-commit and empty-range cases.
+- **Reach:** slice 05's PR handback pastes this table.
+- **Verdict:** sound.
+- **Confidence:** medium.
+
+### Exit 0 on any size, exit 2 on bad input, and `--json` in `size_report.py`'s shape
+
+- **When:** `bee2fab`, `main()` and `report()`.
+- **Slice:** 04
+- **What happens now:** a 40,000-line commit is over hard and exits 0. An unknown commit, `A...B`, `A..B..C`, `HEAD^!`, a path that doesn't exist, a folder that isn't a repo, and `HEAD` in an empty repo each exit 2 with a one-line message and no stdout. `--json` follows `size_report.py`: the same `main()` shape, a `tiers` object, skip reasons as sorted stable keys, and tiers as `"target"`, `"soft"`, `"hard"` (here `null` when under target, since every commit gets a row). Output repeats byte for byte and holds no timestamps or absolute paths.
+- **The gap:** field names were delegated; the exit codes and determinism were decided.
+- **Reach:** slice 05 and any hook reading `--json`.
+- **Verdict:** sound.
+- **Confidence:** medium.
+
+Trivial calls folded: 7-character commit hashes (`sha[:7]`, not git's unique abbreviation), per-commit skip counts only in `--json` while the text shows the range's, `..B` meaning `HEAD..B`, a bare repo reported as "not a git repository", and `--json` accepted in any position (5, delegated to the worker or harmless).
+
+## Next step
+
+Make the whole-range row start at the merge base, with a test where `main` moves after the branch point, then fix the markdown blocks and the shallow-clone fallback. Then put the merge-row and column-note calls, together with Check 2 and Check 3's open needs-you entries, in front of the user with the `138fb64` spot-check. Three of the seven entries are about which commits a range means (merge base, merges, shallow history). Settle in the spec that a range is "what the PR introduces", the way GitHub shows it, before slice 05 wires it in.

@@ -587,6 +587,8 @@ NOTES = [
     "(20 letters and digits) counts as new, so new leans high.",
     "The commit rows find moves inside each commit; the whole-range row finds moves across "
     "the range, so its new count can be lower than the rows' sum.",
+    "The whole-range row starts where the branch left the base (their merge base), as a PR does.",
+    "Deleted leaves out moved-out lines; a moved block shows only under Moved.",
 ]
 
 
@@ -608,6 +610,18 @@ def summarise(files: list[FileCount], filtered: Filtered) -> dict:
             "attrs_from_worktree": filtered.attrs_from_worktree}
 
 
+def shallow_commits(repo: Path) -> set[str]:
+    """Commits whose parents a shallow clone doesn't have."""
+    path = Path(git(repo, "rev-parse", "--git-path", "shallow").strip())
+    path = path if path.is_absolute() else repo / path
+    return set(path.read_text().split()) if path.is_file() else set()
+
+
+def merge_base(repo: Path, a: str, b: str) -> str | None:
+    out = git(repo, "merge-base", a, b, check=False).strip()
+    return out or None
+
+
 def subject(repo: Path, commit: str) -> str:
     return git(repo, "log", "-1", "--format=%s", commit).strip()
 
@@ -617,15 +631,24 @@ def report(repo: Path, rev_range: str) -> dict:
     check_repo(repo)
     repo = toplevel(repo)
     commits = commits_in(repo, rev_range)
+    shallow = shallow_commits(repo)
     rows = []
     for sha in commits:
         files, filtered = count_product(repo, parent(repo, sha), sha)
-        rows.append({"commit": sha[:7], "subject": subject(repo, sha), **summarise(files, filtered)})
-    total = None
+        rows.append({"commit": sha[:7], "subject": subject(repo, sha), **summarise(files, filtered),
+                     "parent_missing": sha in shallow})
+    total, base_note = None, None
     if ".." in rev_range:
-        base, _, head = rev_range.partition("..")
-        files, filtered = count_product(repo, resolve(repo, base or "HEAD"), resolve(repo, head or "HEAD"))
-        total = summarise(files, filtered)
+        a, _, b = rev_range.partition("..")
+        a_sha, b_sha = resolve(repo, a or "HEAD"), resolve(repo, b or "HEAD")
+        base = merge_base(repo, a_sha, b_sha)
+        if base is None:
+            base, base_note = EMPTY_TREE, "no-common-history"
+        elif base != a_sha:
+            base_note = "base-not-ancestor"
+        files, filtered = count_product(repo, base, b_sha)
+        total = {**summarise(files, filtered), "base": base[:7] if base != EMPTY_TREE else None,
+                 "base_note": base_note}
     return {"range": rev_range,
             "tiers": {"target": DIFF_TARGET, "soft": DIFF_SOFT, "hard": DIFF_HARD},
             "commits": rows, "total": total, "notes": NOTES}
@@ -641,17 +664,27 @@ def warnings(data: dict) -> list[str]:
     total = data["total"]
     if total and total["tier"] in ("soft", "hard"):
         out.append(f"The whole range is {DIFF_LABEL[total['tier']]}: split the goal.")
+    for row in data["commits"]:
+        if row["parent_missing"]:
+            out.append(f"`{row['commit']}` has no parent in this shallow clone, so its row counts "
+                       "every line as new. Fetch more history for a real count.")
+    if total and total["base_note"] == "base-not-ancestor":
+        out.append(f"`{data['range'].partition('..')[0]}` is not an ancestor of the range's end; "
+                   f"the whole range is sized from their merge base `{total['base']}`.")
+    if total and total["base_note"] == "no-common-history":
+        out.append("The range's two ends share no history; the whole range is sized from an empty tree.")
     if any(r["attrs_from_worktree"] for r in data["commits"]) or (total and total["attrs_from_worktree"]):
         out.append("linguist attributes were read from the working tree (git older than 2.40).")
     return out
 
 
 def cell(text: str) -> str:
-    return text.replace("|", "\\|")
+    """Table-safe text: an HTML entity for |, so no backslash in a subject can unescape it."""
+    return text.replace("|", "&#124;")
 
 
 def as_text(data: dict) -> str:
-    out = [f"Change size for `{cell(data['range'])}`", "",
+    out = [f"Change size for `{data['range']}`", "",
            "| Commit | Subject | New | Moved | Deleted | Tier |", "|---|---|---|---|---|---|"]
     for r in data["commits"]:
         tier = DIFF_LABEL[r["tier"]] if r["tier"] else ""
@@ -665,8 +698,8 @@ def as_text(data: dict) -> str:
     out += ["", "Skipped files: " + (", ".join(f"{SKIP_LABELS[k]}: {v}" for k, v in skipped.items()) or "none")]
     warn = warnings(data)
     if warn:
-        out += ["", "Warnings:"] + [f"- {w}" for w in warn]
-    out += [""] + [f"- {n}" for n in data["notes"]]
+        out += ["", "**Warnings**", ""] + [f"- {w}" for w in warn]
+    out += ["", "**Notes**", ""] + [f"- {n}" for n in data["notes"]]
     return "\n".join(out)
 
 
