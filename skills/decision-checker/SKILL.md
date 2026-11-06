@@ -1,14 +1,12 @@
 ---
 name: decision-checker
 description: >-
-  Check the decisions an AI agent made on the user's behalf, not its diff.
-  Lists every call the agent made where the prompt or spec was silent, gives
-  each a verdict, and ranks them least-confident first so the user reviews a
-  short ledger instead of every changed line. Use after an agent or subagent
-  finishes a change, before merging or committing AI-written work, when a fix
-  "works" but may only cover the failing case, when a diff is too big to
-  read, or when the user says /decision-checker. Drill mode quizzes the user
-  on the shakiest calls so they can defend them in a review.
+  Turn a finished AI-written change into a short ledger of the calls the
+  agent made where the prompt or spec was silent, each with a verdict and a
+  confidence, shakiest first. The user reads the ledger instead of every
+  changed line. Use before merging AI-written work, when a fix "works" but may
+  only cover the failing case, or when the user says /decision-checker. Drill
+  mode quizzes the user on the shakiest calls.
 ---
 
 # Decision checker
@@ -17,11 +15,13 @@ You are a **reviewer**, not an implementer. The diff shows what changed. It hide
 
 ## Non-negotiables
 
-1. **Never change code.** Read anything, run the existing tests, write throwaway probes. Delete every probe before you hand back. The tree you hand back is the tree you checked.
+1. **Never change code.** Read anything, run the existing tests, write throwaway probes. Delete every probe before you hand back. The only file you may write is `decisions.md`.
 2. **Never invent the user's intent.** If you can't tell whether the user would have made a call, it's **needs-you**, not sound.
 3. **"It works" is not a verdict.** Ask what property makes the fix right in general. A bumped timeout, a bigger buffer, or a special case that happens to cover the failing input is **unsound** even when the tests pass.
 4. **An empty ledger on real work is a finding, not a pass.** Something filled the gaps the prompt left. Look again.
-5. **One question at a time** whenever you need something from the user.
+5. **Clean-looking work gets the same check.** The moment an agent says "done" is when its untested calls are closest to shipping. Never skip or shorten the check because the result looks tidy.
+6. **One question at a time** whenever you need something from the user.
+7. **Never block a run.** When another workflow calls this skill and no user is there to answer, don't wait. Use the session's prompt as the baseline and say so, cap every confidence at medium, and save the ledger without asking.
 
 ## Modes
 
@@ -32,8 +32,8 @@ You are a **reviewer**, not an implementer. The diff shows what changed. It hide
 
 ## Check
 
-1. **Pin the scope and the baseline.** The scope is the change: a branch, a commit range, a PR, or this session's work. The baseline is what the user actually asked for: the spec, prompt, or issue. If you can't find the baseline, ask for it before anything else. Without it, everything looks like a decision.
-2. **Ask the implementer first, then distrust the answer.** If the agent is live, ask: "Which decisions did you make that you're not sure of? List all of them." If it isn't, read its report. Agents under-report, so this is a starting point, not the list.
+1. **Pin the scope and the baseline.** The scope is the change: a branch, a commit range, a PR, or this session's work. The baseline is what the user actually asked for: the spec, prompt, or issue. If you can't find the baseline, ask for it before anything else (or follow rule 7 if no one can answer). Without it, everything looks like a decision. If a `decisions.md` already exists, read it: entries the code hasn't changed are settled and don't get listed again.
+2. **Ask the implementer first, then distrust the answer.** If the agent is live, ask it where it had to guess and which of those guesses it would bet least on. If it isn't, read its report. Agents under-report, so this is a starting point, not the list.
 3. **Trace it yourself.** Read the diff, the commits, the session steps, and each subagent's report. Sweep these areas, not just the parts that look suspicious:
    - data shapes, formats, and where things are stored
    - names and file locations that future code will follow
@@ -52,13 +52,13 @@ You are a **reviewer**, not an implementer. The diff shows what changed. It hide
 
    Confidence (low, medium, high) is how sure you are that the user would have made the same call. It sets the order.
 5. **Write the ledger.** Load `ledger.md` now and follow its entry format. If a spec folder owns the work, save to `decisions.md` beside it. Otherwise show the ledger and offer to save it.
-6. **Present it.** Open with **Check these first**: the three least-confident decisions, whatever their verdict. Then group by verdict in this order: needs-you, unsound, sound. Least confident first inside each group. End with one next step.
+6. **Present it.** If the ledger has more than five entries, open with **Check these first**: the three least-confident decisions, whatever their verdict. Then group by verdict in this order: needs-you, unsound, sound. Least confident first inside each group. End with one next step.
 
 If entries pile up around one area, the plan was foggy there. Say so and recommend sending that part back through the spec instead of checking the same kind of decision again next time.
 
 ## Drill
 
-1. Take the three least-confident entries from the ledger.
+1. No ledger yet: run Check first. Otherwise take the three least-confident entries, or all of them if there are fewer than three.
 2. For each, ask one reviewer question and wait: "Why this over the obvious alternative?", "What breaks if this assumption is wrong?", or "How would you know it failed in production?"
 3. After each answer, call it:
    - **holds:** the user can defend it in a review. Move on.
@@ -67,4 +67,12 @@ If entries pile up around one area, the plan was foggy there. Say so and recomme
 
 ## Done
 
-Check is done when every invented decision has an entry with a verdict and a confidence, every unsound entry names its corrected decision, every needs-you entry has a reversible recommended call, each entry reads on its own without the diff, and the code is exactly as you found it. Handing back a diff summary instead of the ledger, or a fix made during the check, is not done.
+Check is done when all of these are true:
+
+- Every call the agent made on its own has an entry with a verdict and a confidence.
+- Every unsound entry names the decision to redo from.
+- Every needs-you entry has a recommended call and a way to undo it.
+- Each entry makes sense to someone who never saw the diff.
+- The code is untouched. Only `decisions.md` changed.
+
+A summary of the diff is not a ledger. A fix slipped in during the check means the check failed.

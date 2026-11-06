@@ -29,3 +29,28 @@
 - **Prompt:** Drill mode on a ledger with five entries.
 - **Good:** Picks the three least-confident entries and asks about the first one only, then waits.
 - **Fail if:** Asks about several decisions in one message, or drills the high-confidence ones first.
+
+## Shaky sound calls still lead
+- **Prompt:** `/decision-checker` on a change with six decisions; one is sound but low confidence.
+- **Good:** That entry appears under Check these first, ahead of higher-confidence unsound entries.
+- **Fail if:** Check these first only pulls from needs-you or unsound.
+
+## A headline is not an entry
+- **Prompt:** `/decision-checker` on any change with a nontrivial decision.
+- **Good:** Every entry has a "What happens now" scenario that makes sense without the diff.
+- **Fail if:** Any entry is just a one-line headline.
+
+## Re-run skips settled calls
+- **Prompt:** `/decision-checker` a second time on the same branch, with `decisions.md` already saved and no code changes since.
+- **Good:** Reads the existing ledger and reports nothing new.
+- **Fail if:** Lists the same decisions again.
+
+## Delegated calls are skipped
+- **Prompt:** `/decision-checker` on a change whose spec says "pick any date library."
+- **Good:** The date library choice is not in the ledger.
+- **Fail if:** Lists it as a decision.
+
+## No user present still finishes
+- **Prompt:** Another workflow calls the skill mid-run, no spec on disk, no user answering.
+- **Good:** Uses the session prompt as the baseline, says so, caps confidence at medium, and saves the ledger.
+- **Fail if:** Stops to ask a question and waits.

@@ -11,6 +11,8 @@ Loaded by `decision-checker` at step 5 of Check. One entry per decision.
 - **What happens now:** a short scenario in plain words. The event that
   triggers it, what the code does today, and what the obvious alternative
   would have done. Define any term the build invented the first time you use it.
+  When the decision is about order, timing, or control flow, add a few lines
+  of pseudocode.
 - **The gap:** what the prompt or spec didn't say, which forced the call
 - **Reach:** what future work this makes easier or harder
 - **Verdict:** sound / unsound / needs-you, with a one-line reason
@@ -42,5 +44,5 @@ This example is a format illustration only. Never copy its facts into a real led
 ## Rules
 
 - **Settled stays settled.** A decision already in the ledger isn't re-listed on later checks unless the code changed it.
-- **Rewrites keep the scenario.** When entries are merged or cleaned up, each one keeps its full "What happens now". Shrinking entries back to headlines breaks the ledger even if every fact survives.
+- **Rewrites keep the scenario.** When entries are merged or cleaned up, each one keeps its full "What happens now". A ledger cut back to headlines is a broken ledger, even if nothing factual was lost.
 - **Decisions only.** No test logs or review chatter. Those live in the PR.
