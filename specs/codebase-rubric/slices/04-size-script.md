@@ -6,7 +6,7 @@
 
 **Check:** `python3 -m unittest discover -s skills/codebase-rubric/scripts` passes. Fixtures in a temp dir: files of 499, 501, 801, and 1001 lines land in the right tiers (499 not listed); `package-lock.json`, `node_modules/x.js`, a `linguist-generated` file, a file with a generated header, and a binary file are skipped with reasons; two runs give byte-identical output.
 
-**Must stay green:** `python3 tools/validate.py`.
+**Must stay green:** `python3 tools/validate.py`, except the one expected "skills/codebase-rubric/ has no SKILL.md" error until 07 adds it. (Corrected during build: the validator treats every folder under `skills/` as a skill.)
 
 **Decided:**
 - Raw newline count of all lines. Skip rules as listed in the README under Decided in planning.

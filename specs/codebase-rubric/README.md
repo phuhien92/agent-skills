@@ -60,6 +60,6 @@ Build order comes from **Depends on**. 01 and 04 can start in parallel; 02 and 0
 
 ## Next agent prompt
 
-Status: planned, target chosen. Start with 01 and 04 in parallel. 01 needs the user's approval before 02 and 03 start.
+Status: 01 drafted, waiting for the user's approval. 04 built: 5 fixture tests pass, and on brain-cli it lists exactly `src/cli.ts`, `test/extensions.test.ts`, and `src/extensions.ts`, skipping `dist/` and the PNG. `validate.py` shows one expected error (no SKILL.md) until 07. Next: user approves 01, then 02 and 03 in parallel.
 
 Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.
