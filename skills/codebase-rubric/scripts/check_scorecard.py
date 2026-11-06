@@ -17,7 +17,8 @@ AREAS = ["Architecture", "Modularity", "Abstraction", "Components", "Errors"]
 SECTIONS = ["meta", "size", "scores", "trace", "delta"]
 META_KEYS = ["Repo", "Commit", "Date", "Rubric approved", "Scorers independent"]
 CITATION = re.compile(r"`[^`\s]+:\d+(?:-\d+)?`")
-SAMPLE = re.compile(r"^\d+ of \d+$")
+SAMPLE = re.compile(r"^(\d+) of (\d+)$")
+TIERS = {"over target (500)": (500, 800), "over soft (800)": (800, 1000), "over hard (1000)": (1000, None)}
 NOT_SCORED = "not scored"
 
 
@@ -76,6 +77,18 @@ def problems(text: str) -> list[str]:
         if data["meta"].get(key, "").lower() not in ("yes", "no"):
             found.append(f"meta: {key} must be yes or no")
 
+    if not re.search(r"^Skipped: ", section(text, "size"), re.M):
+        found.append("size: no 'Skipped:' line inside the size markers")
+    for row in data["size"]:
+        tier = TIERS.get(row["tier"])
+        if not row["lines"].isdigit() or tier is None:
+            found.append(f"size: bad row for {row['path']}: lines '{row['lines']}', tier '{row['tier']}'")
+            continue
+        low, high = tier
+        n = int(row["lines"])
+        if n <= low or (high is not None and n > high):
+            found.append(f"size: {row['path']} has {n} lines, which is not {row['tier']}")
+
     areas = [s.get("area", "") for s in data["scores"]]
     if areas != AREAS:
         found.append(f"scores: areas must be {', '.join(AREAS)} in order; got {', '.join(areas) or 'none'}")
@@ -94,8 +107,11 @@ def problems(text: str) -> list[str]:
         if score not in {"1", "2", "3", "4", "5"}:
             found.append(f"scores: {area} score must be 1-5 or 'not scored'; got '{row.get('score', '')}'")
             continue
-        if not SAMPLE.match(sample):
+        m = SAMPLE.match(sample)
+        if not m:
             found.append(f"scores: {area} sample must read 'N of M'; got '{sample}'")
+        elif int(m.group(2)) < 1 or int(m.group(1)) > int(m.group(2)):
+            found.append(f"scores: {area} sample must have 1 <= M and N <= M; got '{sample}'")
         if not CITATION.search(evidence):
             found.append(f"scores: {area} evidence has no `path:line`")
         if not scope or scope == "-":

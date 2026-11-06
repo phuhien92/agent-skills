@@ -38,6 +38,19 @@ class CheckScorecardTest(unittest.TestCase):
         bad = GOOD.replace("| 7 of 10 |", "| most |")
         self.assertTrue(any("Components sample" in p for p in problems(bad)))
 
+    def test_sample_counts_must_make_sense(self) -> None:
+        bad = GOOD.replace("| 7 of 10 |", "| 9 of 3 |")
+        self.assertTrue(any("N <= M" in p for p in problems(bad)))
+
+    def test_size_rows_checked(self) -> None:
+        row = "| `src/big.ts` | 1200 | over hard (1000) |\n"
+        ok = GOOD.replace("|---|---|---|\n", "|---|---|---|\n" + row, 1)
+        self.assertEqual(problems(ok), [])
+        bad = ok.replace("| 1200 | over hard (1000) |", "| 700 | over hard (1000) |")
+        self.assertTrue(any("src/big.ts has 700 lines" in p for p in problems(bad)))
+        no_skip = GOOD.replace("Skipped: generated header: 4, lockfile: 2, not a code file: 61\n", "")
+        self.assertTrue(any("Skipped:" in p for p in problems(no_skip)))
+
     def test_missing_trace(self) -> None:
         start = GOOD.index("<!-- trace:start -->") + len("<!-- trace:start -->")
         end = GOOD.index("<!-- trace:end -->")

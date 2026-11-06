@@ -17,9 +17,9 @@ Fixture built from `specs/codebase-rubric/spikes/03c-per-area-keen.md`.
 <!-- size:start -->
 | File | Lines | Tier |
 |---|---|---|
-<!-- size:end -->
 
 Skipped: generated header: 4, lockfile: 2, not a code file: 61
+<!-- size:end -->
 
 ## Scores
 
@@ -39,9 +39,10 @@ A missing token reference during a build.
 
 <!-- trace:start -->
 1. `tools/token-generator/src/resolve.ts:32`: issue raised with the token name; no source file.
-2. `tools/token-generator/src/pipeline.ts:87-88`: merged into issues; nothing written.
-3. `tools/token-generator/src/cli.ts:16`: printed as `color.x [reference]: references missing token`.
-4. `tools/token-generator/src/cli.ts:17`: exits 1, the same code as every failure.
+2. `tools/token-generator/src/resolve.ts:23`: deduplicated and pushed.
+3. `tools/token-generator/src/pipeline.ts:87-88`: merged into issues; nothing written.
+4. `tools/token-generator/src/cli.ts:16`: printed as `color.x [reference]: references missing token`.
+5. `tools/token-generator/src/cli.ts:17`: exits 1, the same code as every failure.
 <!-- trace:end -->
 
 ## Change since last scorecard

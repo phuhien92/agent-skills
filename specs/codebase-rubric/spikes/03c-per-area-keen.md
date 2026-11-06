@@ -1,6 +1,6 @@
 # Per-area scorers on keen-design-system
 
-Five fresh scorers, one per area, each shown only its own section of `rubric.md` and never another score. Repo: phuhien92/keen-design-system (shallow clone). Compare with `03b-scores-keen.md`, one scorer for all areas.
+Five fresh scorers, one per area, each shown only its own section of `rubric.md` and never another score. Repo: phuhien92/keen-design-system (shallow clone; its history is one squashed commit, `847e726`). Size run with the code-only rules: no code file over 500 lines; skipped: generated header 4, lockfile 2, not a code file 61. Compare with `03b-scores-keen.md`, one scorer for all areas.
 
 | Area | One scorer | Per area | Sample fit | Main evidence | Counter-example |
 |---|---|---|---|---|---|

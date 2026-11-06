@@ -6,8 +6,9 @@ Rules the checker enforces:
 
 - **Meta** has every key. `Rubric approved` and `Scorers independent` are `yes` or `no`.
 - **Scores** has exactly five rows, one per area, in this order: Architecture, Modularity, Abstraction, Components, Errors.
-- A **numeric score** is 1 to 5, has a Sample of the form `N of M`, and its Evidence holds at least one `` `path:line` `` or `` `path:start-end` ``.
-- **Not scored** needs a Scope and a reason in Evidence. Sample is `-`.
+- **Size** rows have a whole-number Lines value and a Tier of `over target (500)`, `over soft (800)`, or `over hard (1000)` that matches it. The `Skipped:` line sits inside the size markers.
+- A **numeric score** is 1 to 5, names a Scope, has a Sample of the form `N of M` with 1 ≤ N ≤ M, and its Evidence holds at least one `` `path:line` `` or `` `path:start-end` ``.
+- **Not scored** needs a Scope and a reason in Evidence. Put `-` in Sample.
 - **Error trace** has at least two hops, each starting with `` `path:line` ``, unless Errors is not scored.
 
 ````markdown
@@ -29,9 +30,9 @@ Rules the checker enforces:
 | File | Lines | Tier |
 |---|---|---|
 <rows from size_report.py>
-<!-- size:end -->
 
 Skipped: <skip counts from size_report.py>
+<!-- size:end -->
 
 ## Scores
 
