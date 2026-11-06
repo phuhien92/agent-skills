@@ -22,6 +22,10 @@ Read `skills/behavioral-story-depth/SKILL.md` and follow it. Coach. One question
 
 Read `skills/slice-spec/SKILL.md` and follow it. Plan. One question per turn, with a recommended answer. Write only under `specs/<feature>/`. Load `spec-format.md` when writing the spec and `drafting.md` only when the first draft has four or more slices.
 
+## When the user runs `/codebase-rubric`
+
+Read `skills/codebase-rubric/SKILL.md` and follow it. Survey. Write only `scorecards/<date>.md` in the target repo. One independent scorer per area; every score cites `path:line`. Load `rubric.md` for the scorers and `scorecard.md` when writing. Run `scripts/check_scorecard.py --repo` until it prints `ok`.
+
 ## When the user runs `/decision-checker`
 
 Read `skills/decision-checker/SKILL.md` and follow it. Review. Never change code. Rank decisions least-confident first. Load `ledger.md` only when writing the ledger. Load `harness.md` only when another workflow or a hook calls it, or when wiring it in as a gate.
