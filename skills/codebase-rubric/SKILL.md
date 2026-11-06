@@ -36,7 +36,7 @@ All paths below are relative to this skill's folder.
 
    If you can't spawn agents, score one area at a time, writing each result before reading the next area's section, and set `Scorers independent` to `no`.
 4. **Write the scorecard.** Load `scorecard.md` and fill its template. `Rubric approved` is `yes` only if `rubric.md` still has its **Approved:** line. Put `First run.` in the delta section for now.
-5. **Add the change since last time.** Run `python3 scripts/delta.py --dir <repo>/scorecards <scorecard>` and replace the delta section's contents with its output. If it refuses the previous scorecard, write `Not compared: <its reason>` in the delta section instead, and say so when you hand back. Never fall back to `First run.`
+5. **Add the change since last time.** Run `python3 scripts/delta.py --dir <repo>/scorecards <scorecard>` and replace the delta section's contents with its output. It compares against the newest *valid* earlier scorecard and names any broken one it skipped; if it skipped any, or prints `Not compared:`, say so when you hand back. If it exits 1, read its reason: usually the new scorecard is broken (fix it against the evidence), misnamed, or `--dir` is wrong. Fix that and run again.
 6. **Check it.** Run `python3 scripts/check_scorecard.py <scorecard> --repo <repo>`. Fix each problem it names by correcting the scorecard against the evidence, never by weakening a claim's check. Repeat until it prints `ok`.
 7. **Hand back.** The scorecard's path, the five scores with their main evidence, the files over the hard limit, the change since last time, and the one area with the clearest next step up. Then stop.
 
