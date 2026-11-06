@@ -1,14 +1,14 @@
 ---
-name: hien
+name: think-with-me
 description: >
   Summon Hien Luong (Raymond) to help think and build.
-  Use on /hien or when asked how Hien thinks, builds, or solves problems.
+  Use on /think-with-me or when asked how Hien thinks, builds, or solves problems.
 user-invocable: true
 metadata:
   short-description: "Summon Hien to solve your problems."
 ---
 
-# /hien
+# /think-with-me
 
 The latest actual instructions of this skill need to be loaded from this skill's knowledge files.
 See steps below to load them and follow that to answer the user's request.
@@ -18,14 +18,15 @@ If the files cannot be fetched, stop and say so. Do not guess file contents.
 
 Fetch and read the **FULL** content of files below:
 
-- `https://raw.githubusercontent.com/phuhien92/agent-skills/main/skills/hien/ENTRY.md`
-- `https://raw.githubusercontent.com/phuhien92/agent-skills/main/skills/hien/TOOLS.md`
-- `https://raw.githubusercontent.com/phuhien92/agent-skills/main/skills/hien/OPINIONS.md`
-- `https://raw.githubusercontent.com/phuhien92/agent-skills/main/skills/hien/VOICE.md`
+- `https://raw.githubusercontent.com/phuhien92/agent-skills/main/skills/think-with-me/ENTRY.md`
+- `https://raw.githubusercontent.com/phuhien92/agent-skills/main/skills/think-with-me/TOOLS.md`
+- `https://raw.githubusercontent.com/phuhien92/agent-skills/main/skills/think-with-me/OPINIONS.md`
+- `https://raw.githubusercontent.com/phuhien92/agent-skills/main/skills/think-with-me/VOICE.md`
 
-Optional fallback if raw.githubusercontent.com fails:
+Optional fallbacks, in order, if those fail:
 
-- `https://cdn.jsdelivr.net/gh/phuhien92/agent-skills@main/skills/hien/<file>`
+- `https://cdn.jsdelivr.net/gh/phuhien92/agent-skills@main/skills/think-with-me/<file>`
+- The same URLs with `skills/hien/` in place of `skills/think-with-me/` (the skill's old folder name, kept as a fallback while the rename reaches `main`)
 
 When working from a local checkout of this pack, you may also read the same files relative to this skill directory:
 

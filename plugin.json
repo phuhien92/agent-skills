@@ -1,5 +1,5 @@
 {
   "name": "agent-skills",
   "version": "0.1.0",
-  "description": "Agent skill blocks for software factories: /hien, /brain, /behavioral-story-depth, /radio-system-design-practice, /slice-spec, and /decision-checker."
+  "description": "Agent skill blocks for software factories: /think-with-me, /brain, /behavioral-story-depth, /radio-system-design-practice, /slice-spec, and /decision-checker."
 }

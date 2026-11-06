@@ -56,15 +56,15 @@ https://github.com/phuhien92/agent-skills
 
 This pack. One directory per skill, slash commands as entry points, plugin manifests for Claude Code and Cursor.
 
-It solves "I want agents to follow a specific workflow" without dumping a pile of notes into every chat. Current public skills include `/hien` and `/radio-system-design-practice`.
+It solves "I want agents to follow a specific workflow" without dumping a pile of notes into every chat. Current public skills include `/think-with-me` and `/radio-system-design-practice`.
 
 Install one skill:
 
 ```bash
-npx skills add phuhien92/agent-skills --skill hien
+npx skills add phuhien92/agent-skills --skill think-with-me
 ```
 
-Or open the repo and run `/hien` / `/radio-system-design-practice` from the mapped commands.
+Or open the repo and run `/think-with-me` / `/radio-system-design-practice` from the mapped commands.
 
 ## kid-coins
 
