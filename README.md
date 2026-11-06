@@ -35,7 +35,7 @@ Your time goes into the facts in step 1 and the answers in steps 2 to 4. The ski
 
 ### À la carte
 
-- **Think a problem through.** `/hien` loads my tools, opinions, and voice, then helps you think and build the way I would.
+- **Think a problem through.** `/think-with-me` loads my tools, opinions, and voice, then helps you think and build the way I would.
 - **"Did I already decide this?"** `/brain` searches your notes before the agent answers from general knowledge.
 - **One story keeps collapsing.** `/behavioral-story-depth` in Drill mode on just that story.
 - **A feature is too big to hand over.** `/slice-spec` interviews you, then writes a spec of small slices with a pass/fail check each. Agents build from it; `/decision-checker` audits against it.
@@ -63,7 +63,7 @@ mkdir -p ~/.agents/skills && ln -s ~/src/agent-skills/skills/* ~/.agents/skills/
 **Any agent (skills CLI):** install everything with the command at the top, or pick one:
 
 ```bash
-npx skills add phuhien92/agent-skills --skill hien
+npx skills add phuhien92/agent-skills --skill think-with-me
 npx skills add phuhien92/agent-skills --skill radio-system-design-practice
 npx skills add phuhien92/agent-skills --skill behavioral-story-depth
 npx skills add phuhien92/agent-skills --skill slice-spec
@@ -98,7 +98,7 @@ npx skills add phuhien92/agent-skills --skill brain   # needs the brain CLI: npm
 
 | Skill | What it does | Use when |
 |---|---|---|
-| [hien](skills/hien/SKILL.md) | Summons Hien Luong (Raymond): loads ENTRY, TOOLS, OPINIONS, and VOICE, then helps you think and build. | `/hien`, or when asked how Hien thinks, builds, or solves problems |
+| [think-with-me](skills/think-with-me/SKILL.md) | Summons Hien Luong (Raymond): loads ENTRY, TOOLS, OPINIONS, and VOICE, then helps you think and build. | `/think-with-me`, or when asked how Hien thinks, builds, or solves problems |
 | [brain](skills/brain/SKILL.md) | Searches and updates your markdown vault (Obsidian or similar) through the [brain CLI](https://github.com/phuhien92/brain-cli): ranked search, notes by name, one-file-per-entry memory that syncs across machines. | Questions about your notes, past decisions or preferences; recording a lesson worth keeping. Requires the CLI |
 
 ## Project structure
@@ -108,7 +108,7 @@ agent-skills/
 ├── skills/
 │   ├── brain/
 │   │   └── SKILL.md           # source of truth: phuhien92/brain-cli
-│   ├── hien/
+│   ├── think-with-me/
 │   │   ├── SKILL.md
 │   │   ├── ENTRY.md
 │   │   ├── TOOLS.md
@@ -148,9 +148,9 @@ Each skill is a workflow, not a dump of notes:
 
 - YAML frontmatter: `name` + `description` (what + when)
 - Steps the agent must follow
-- Supporting files loaded only when needed (`examples.md`, or `/hien` knowledge files)
+- Supporting files loaded only when needed (`examples.md`, or `/think-with-me` knowledge files)
 
-`/hien` keeps ENTRY, TOOLS, OPINIONS, and VOICE next to the skill so they do not collide with other skills in this pack.
+`/think-with-me` keeps ENTRY, TOOLS, OPINIONS, and VOICE next to the skill so they do not collide with other skills in this pack.
 
 ## Checks
 

@@ -17,7 +17,7 @@ This pack does not build the factory. It ships the **blocks** a factory calls at
 
 | Station | Block | Status |
 |---|---|---|
-| Intent | `hien`, `brain` | have |
+| Intent | `think-with-me`, `brain` | have |
 | Map, Slice | `slice-spec` | have; writes the spec that Build and Decide read |
 | Build | the harness's own workers | not ours |
 | Verify | `codebase-rubric`, plus the "agents check before the human reviews" rule in `AGENTS.md` | have; a periodic scorecard, not a per-change gate |
@@ -120,6 +120,13 @@ Newest first. Each entry says what we decided, why, what we turned down, where i
 - **Turned down:** blocking commits (a second gate on every change), running live failures (slow and fragile across repos), and one scorer for all areas (one impression leaks across all five).
 - **Where it can fail:** about five scorers' worth of tokens per run; scores rest on samples, so a different sample can move a score by one; git history that is squashed limits the Modularity evidence (folder layout stands in). Four `decision-checker` ledgers ran during the build. The unsound calls they found were fixed, or settled by one of the user's calls; the user made 14 calls along the way.
 - **Revisit when:** a repo's second scorecard shows whether the delta catches real change, or scores swing by more than one between runs with no code change.
+
+### 2026-11-06: Rename `/hien` to `/think-with-me`
+
+- **Decision:** the skill is now `think-with-me` (folder, commands, Cursor link, eval, docs, manifests). Its persona and knowledge files are unchanged.
+- **Why:** the user's call. A name that says what the skill does reads better next to the other blocks.
+- **Where it can fail:** the skill fetches its knowledge files from `main`. Until this rename is merged, `skills/think-with-me/` doesn't exist there, so `SKILL.md` falls back to the old `skills/hien/` URLs. After the merge, the old URLs 404 and the new ones serve. Anyone who installed the old name keeps `/hien` until they reinstall.
+- **Revisit when:** merged; then drop the `skills/hien/` fallback line.
 
 ### 2026-11-06: `slice-spec` is the second factory block
 

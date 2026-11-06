@@ -7,7 +7,7 @@ Open this repository (or add it next to a practice repo). `.cursor/skills/` maps
 In chat:
 
 ```
-/hien
+/think-with-me
 ```
 
 or
@@ -26,11 +26,11 @@ From a clone:
 claude --plugin-dir /Users/hienluong/workspace/agent-skills
 ```
 
-Then `/hien` or `/radio-system-design-practice`.
+Then `/think-with-me` or `/radio-system-design-practice`.
 
 ## skills CLI
 
 ```bash
-npx skills add phuhien92/agent-skills --skill hien
+npx skills add phuhien92/agent-skills --skill think-with-me
 npx skills add phuhien92/agent-skills --skill radio-system-design-practice
 ```
