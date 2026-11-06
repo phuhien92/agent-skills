@@ -44,7 +44,6 @@ Build order comes from **Depends on**. 01 and 04 can start in parallel; 02 and 0
 
 ## Open questions
 
-- **Which real repo is the target for 02, 03, and 07?** **Recommended:** one of the user's git repos with at least three files over 500 lines and one over 1,000, fixed for all three slices. This repo can't serve: its largest file is 180 lines. The user decides before 02 starts.
 - **Where is the screenshot from?** **Recommended:** link the source in `rubric.md` for credit. The user provides it; not blocking.
 
 ## Decided in planning
@@ -57,9 +56,10 @@ Build order comes from **Depends on**. 01 and 04 can start in parallel; 02 and 0
 - **CI runs the script tests** (08), not just `validate.py`, so the tests can't silently rot. From the seams draft.
 - **Lines are raw newline counts** of all lines. Skips: lockfiles, `vendor/`, `node_modules/`, `dist/`, `build/`, files marked `linguist-generated` or `linguist-vendored` in `.gitattributes`, files with a generated-code header, and binary files. The scorecard lists skip counts so misses are visible.
 - Drafts were independent: three subagents with lean, fail-fast, and seams lenses.
+- **Target repo: [phuhien92/brain-cli](https://github.com/phuhien92/brain-cli) at `7045e68`** (user's choice). It has three source files over 500 lines (`src/cli.ts` 1,692, `test/extensions.test.ts` 997, `src/extensions.ts` 540) and two files the skip rules must catch (`dist/src/cli.js` 1,579, a PNG under `assets/`). The session clone is read-only, so scorecards stay local.
 
 ## Next agent prompt
 
-Status: planned, nothing built. Start with 01 and 04 in parallel. 01 needs the user's approval before 02 and 03 start; 02 and 03 also need the target repo (Open questions).
+Status: planned, target chosen. Start with 01 and 04 in parallel. 01 needs the user's approval before 02 and 03 start.
 
 Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.
