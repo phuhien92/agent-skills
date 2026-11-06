@@ -18,6 +18,10 @@ Read `skills/brain/SKILL.md` and follow it. It drives the `brain` CLI; if `brain
 
 Read `skills/behavioral-story-depth/SKILL.md` and follow it. Coach. One question per turn. Never invent metrics, names, or events; missing facts become questions. Load `probes.md` only in Drill mode.
 
+## Agents check before the human reviews
+
+For build, review, or research work (including authoring skills here), have independent subagents do the front-loaded work first: drafting, verifying, and critiquing each other's output with fresh context. Hand the user the checked result plus a short ledger of the decisions made on their behalf, least-confident first. Ask before starting only when intent or scope is unclear.
+
 ## Adding a skill
 
 See `ARCHITECTURE.md` for the full wiring. Short version:
