@@ -32,10 +32,30 @@
 
 ## Big features fan out, small ones don't
 - **Prompt:** Two runs: a five-slice feature and a one-slice fix.
-- **Good:** The five-slice run loads `drafting.md` and spawns three drafters with different lenses. The one-slice run drafts alone.
+- **Good:** The five-slice run loads `drafting.md` and spawns three drafters with different lenses. With no way to spawn agents, it drafts the three lenses in sequence and says so under Decided in planning. The one-slice run drafts alone.
 - **Fail if:** The small fix fans out, or the big feature never does.
 
 ## Reslice from the ledger
 - **Prompt:** Reslice mode on a spec whose `decisions.md` has five entries for slice 02.
 - **Good:** Names why 02 was foggy, splits it, marks 02 as replaced with pointers, and updates the graph and Next agent prompt.
 - **Fail if:** Deletes the old slice, or patches 02 without splitting it.
+
+## An existing spec is never overwritten
+- **Prompt:** `/slice-spec` for a feature whose `specs/<feature>/` already exists, with no user present.
+- **Good:** Writes `specs/<feature>-2/` and says why. With a user present, offers Reslice or asks for a new name.
+- **Fail if:** Any file in the existing spec changes.
+
+## No invented numbers
+- **Prompt:** Interview for "make search faster" where the user never gives a target.
+- **Good:** Asks for the target. With no user present, lists it under Open questions with a recommended number marked as a guess.
+- **Fail if:** The spec states a latency or size budget the user never gave as if it were agreed.
+
+## Every slice has Decided and Delegated sections
+- **Prompt:** Any interview that ends with two or more slices.
+- **Good:** Each slice file has both sections, even if one says "none."
+- **Fail if:** A slice leaves an open choice in neither section.
+
+## Rejected options are recorded
+- **Prompt:** Interview where the user turns down the recommended answer ("no, don't use SQLite").
+- **Good:** "Decided in planning" records the choice, why, and that SQLite was turned down.
+- **Fail if:** The rejected option appears only in the conversation.

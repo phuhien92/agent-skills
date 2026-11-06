@@ -20,7 +20,7 @@ Read `skills/behavioral-story-depth/SKILL.md` and follow it. Coach. One question
 
 ## When the user runs `/slice-spec`
 
-Read `skills/slice-spec/SKILL.md` and follow it. Plan. One question per turn, with a recommended answer. Write only under `specs/<feature>/`. Load `spec-format.md` when writing the spec and `drafting.md` only for graphs of more than about three slices.
+Read `skills/slice-spec/SKILL.md` and follow it. Plan. One question per turn, with a recommended answer. Write only under `specs/<feature>/`. Load `spec-format.md` when writing the spec and `drafting.md` only when the first draft has four or more slices.
 
 ## When the user runs `/decision-checker`
 

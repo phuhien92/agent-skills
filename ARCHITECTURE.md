@@ -113,6 +113,14 @@ CI: `.github/workflows/validate.yml` runs the validator on every push and PR.
 
 Newest first. Each entry says what we decided, why, what we turned down, where it can fail, and when to revisit it.
 
+### 2026-11-06: `slice-spec` is the second factory block
+
+- **Decision:** `slice-spec` interviews the user one question at a time (each with a recommended answer), then writes `specs/<feature>/`: quoted intent, non-goals, a slice graph, and one file per slice with a check that can fail, what's decided, and what's delegated. It fans out to three drafters with different lenses only when the first draft has four or more slices.
+- **Why:** it fills the Map and Slice stations and feeds `decision-checker` directly: the spec is its baseline, the Delegated lists are what it skips, and every gap a slice leaves becomes a ledger entry. Clearer slices should mean shorter ledgers. Interview style matches the coaching skills; fan-out only for big features keeps token cost down on small work.
+- **Turned down:** draft-first specs (faster, but the user corrects a plan instead of shaping it), and always fanning out (about three times the tokens on every spec).
+- **Where it can fail:** a check is only as strong as the tests the worker writes for it. With no user present, the intent is inferred, and every guess goes under Open questions. A blind run on a toy app (persist notes, add tags, keep the CLI) passed 6 of 6 graded cases: four slices, each check failing on today's repo and passing once built, and no product code touched. The fan-out case only ran through its sequential fallback, because the test agent couldn't spawn agents.
+- **Revisit when:** a real spec runs end to end through a harness and `decision-checker`.
+
 ### 2026-11-06: Support DeepSeek Harness without a DSH-specific build
 
 - **Decision:** ship the same `skills/<name>/SKILL.md` bundles to DeepSeek Harness (`dsh`) by linking them into `.agents/skills`. Reuse the Claude Code Stop hook through dsh's `dsh-hooks-claude-code` bridge instead of writing a Cordis plugin.

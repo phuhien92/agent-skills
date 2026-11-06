@@ -6,7 +6,7 @@ Loaded by `slice-spec` at step 5 of Interview, and in Reslice. A spec is a folde
 specs/<feature>/
 ├── README.md          # intent, constraints, graph, handoff
 ├── slices/
-│   ├── 01-<name>.md   # one file per slice, numbered in build order
+│   ├── 01-<name>.md   # one file per slice, numbered when created
 │   └── 02-<name>.md
 └── decisions.md       # written later by decision-checker, never by slice-spec
 ```
@@ -17,6 +17,8 @@ specs/<feature>/
 
 ```markdown
 # <Feature name>
+
+**Branch:** <the branch this spec is built on, so decision-checker can find it>
 
 ## Intent
 
@@ -40,7 +42,7 @@ How the user will know it worked: <their answer>
 | 01 | <name> | <one question> | `<command>` or <artifact + decision> | none |
 | 02 | <name> | ... | ... | 01 |
 
-Slices with no unmet dependency can be built in parallel.
+Build order comes from **Depends on**, not from the numbers. Slices with no unmet dependency can be built in parallel. Keep the Check cell short; the exact command lives in the slice file, where pipes and quotes don't break the table.
 
 ## Open questions
 
@@ -53,6 +55,8 @@ Slices with no unmet dependency can be built in parallel.
 ## Next agent prompt
 
 <Status, the next slice to pick up, and anything a cold agent needs. Keep it current and short; it is the handoff, not a log.>
+
+Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.
 ```
 
 When the intent was inferred (no user present), say so on the first line under **Intent**.
@@ -67,6 +71,8 @@ When the intent was inferred (no user present), say so on the first line under *
 **Seam:** <the module, interface, or file boundary it builds or changes, with inputs and outputs>
 
 **Check:** `<command>` passes when <what pass means>. Fails when <what fail means>.
+
+**Must stay green:** <existing tests or behavior this slice must not break>
 
 **Decided:**
 - <choices already made for the worker, with the reason>
@@ -83,4 +89,5 @@ When the intent was inferred (no user present), say so on the first line under *
 - **Intent stays quoted.** Never rewrite the user's words into a broader goal. A reviewer treats the Intent section as acceptance criteria.
 - **Delegated means delegated.** Anything listed there is the worker's call. Anything not listed and not decided is a gap, and decision-checker will report it.
 - **Reslice in place.** Mark a replaced slice `Replaced by NN, NN` at the top and keep it, so the history is readable.
+- **Missing inputs don't block.** When art, data, or credentials are missing, plan a placeholder the slice can build with, and list under Open questions exactly what must replace it and who provides it.
 - **No product code in the spec.** Interfaces and examples are fine; implementations belong to the worker.

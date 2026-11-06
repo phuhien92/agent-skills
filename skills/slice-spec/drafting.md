@@ -1,6 +1,6 @@
 # Parallel drafting
 
-Loaded by `slice-spec` at step 3 of Interview when the slice graph has more than about three slices. One drafter misses cuts that a differently minded drafter finds. Where independent drafts agree, the cut is solid; where they split is where to think hardest.
+Loaded by `slice-spec` at step 3 of Interview when your first draft has four or more slices. A single planner has blind spots. Drafters with different priorities, working apart, cover each other: a cut they all reach is trustworthy, and a cut they argue about deserves the most thought.
 
 ## Fan out
 
@@ -8,11 +8,11 @@ Spawn three subagents in one message, each with fresh context. Give each the **s
 
 Give each a different lens:
 
-- **Fewest slices:** the shortest path that still ships. Merge slices and question every one.
-- **Riskiest first:** order so the plan fails fast if an assumption is wrong.
-- **Cleanest seams:** sharpen module boundaries and testability, even at the cost of more slices.
+- **Lean:** what is the least work that still delivers the intent? Every slice must justify itself.
+- **Fail fast:** which assumption, if wrong, sinks the plan? Test that one first.
+- **Seams:** where do the module boundaries want to be? Accept extra slices to get boundaries that test cleanly.
 
-Swap a lens for one the feature needs (data migration safety, performance, visual fidelity) but never run the same lens twice. If more than one model family is available, mix them.
+Swap a lens for one the feature needs (data migration safety, performance, visual fidelity). Each drafter gets a lens no other drafter has. If more than one model family is available, mix them.
 
 Each drafter returns a slice graph in the README table format from `spec-format.md`, plus the risks it saw. Drafters write no files.
 
@@ -26,4 +26,4 @@ Build the plan yourself. Don't pick a winner.
 
 ## When you can't fan out
 
-With no subagent tool, write the three drafts yourself in sequence, one lens at a time, before reading them together. Say in the spec that the drafts were not independent.
+If you can't spawn a fresh agent in this session, write the three drafts yourself in sequence, one lens at a time, before reading them together. Keep the drafts outside the repo (they are scratch, not spec), and say in the spec's **Decided in planning** that the drafts were not independent.
