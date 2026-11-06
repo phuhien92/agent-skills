@@ -44,7 +44,6 @@ Build order comes from **Depends on**. 01 and 04 can start in parallel; 02 and 0
 
 ## Open questions
 
-- **Which real repo is the target for 02, 03, and 07?** **Recommended:** one of the user's git repos with at least three files over 500 lines and one over 1,000, fixed for all three slices. This repo can't serve: its largest file is 180 lines. The user decides before 02 starts.
 - **Where is the screenshot from?** **Recommended:** link the source in `rubric.md` for credit. The user provides it; not blocking.
 
 ## Decided in planning
@@ -57,9 +56,18 @@ Build order comes from **Depends on**. 01 and 04 can start in parallel; 02 and 0
 - **CI runs the script tests** (08), not just `validate.py`, so the tests can't silently rot. From the seams draft.
 - **Lines are raw newline counts** of all lines. Skips: lockfiles, `vendor/`, `node_modules/`, `dist/`, `build/`, files marked `linguist-generated` or `linguist-vendored` in `.gitattributes`, files with a generated-code header, and binary files. The scorecard lists skip counts so misses are visible.
 - Drafts were independent: three subagents with lean, fail-fast, and seams lenses.
+- **`rubric.md` approved as written** by the user (2026-11-06), including its "How to score" rules (evidence before score; on a tie, take the lower score and say what would earn the higher). Those rules count as settled for 07.
+- **Size rules settled by the user after the first ledger:** `node_modules/` and `vendor/` skipped at any depth, `dist/` and `build/` only at the repo root or a package root, no `third_party/`; **code files only** (docs, data, and images count as "not code"; this was not the recommended option); JSON skip keys are stable slugs; and **no pull request from this branch until 08**, keeping the `validate.py` check as written.
+- **Tie rule reworded, approved by the user:** "pick the lower anchor; a 4 needs the 5 anchor to fit most of the repo, a 2 needs the 1 anchor to fit most of it."
+- **Second repo for separation, approved by the user: [phuhien92/keen-design-system](https://github.com/phuhien92/keen-design-system).** A component library with no code file over 500 lines, the opposite shape of brain-cli. If it also scores all 3s, sharpen the anchors before 07.
+- **One fresh scorer per area, approved by the user.** The keen-design-system check scored all five areas 4, and brain-cli scored four 3s: each scorer carried one impression across every area. A scorer that sees only its own area can't. The rubric also gains "not scored" (too little code, with scope named) and "most" as at least two-thirds of a listed sample. Costs about five scorers per run, acceptable for a periodic check.
+- **After the second ledger, the user decided:** at least three areas must be scored; CSS, SCSS, Less, HTML and MDX count as code; the checker verifies citations against the repo with `--repo`. The user also approved three planner calls: sample at least six units ("not scored" under three), the one-agent fallback marked "Scorers independent: no", and folder layout standing in for git history in the Modularity 5 anchor.
+- **Success test (07) accepted by the user** on the brain-cli scorecard (2026-11-06).
+- **Slices 02 and 03 accepted by the user** on the evidence (2026-11-06) without a hand re-check: the trace was spot-checked hop by hop by the planner, and two scoring citations were confirmed.
+- **Target repo: [phuhien92/brain-cli](https://github.com/phuhien92/brain-cli) at `7045e68`** (user's choice). It has three source files over 500 lines (`src/cli.ts` 1,692, `test/extensions.test.ts` 997, `src/extensions.ts` 540) and two files the skip rules must catch (`dist/src/cli.js` 1,579, a PNG under `assets/`). The session clone is read-only, so scorecards stay local.
 
 ## Next agent prompt
 
-Status: planned, nothing built. Start with 01 and 04 in parallel. 01 needs the user's approval before 02 and 03 start; 02 and 03 also need the target repo (Open questions).
+Status: done. Four decision-checker ledgers in `decisions.md`; close-out fixes applied. One open call for the user: when `delta.py` refuses the previous scorecard, the skill writes `Not compared: <reason>` (applied provisionally; reverse by deleting that sentence from SKILL.md step 5).
 
 Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.

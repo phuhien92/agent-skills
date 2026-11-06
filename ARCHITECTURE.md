@@ -17,10 +17,10 @@ This pack does not build the factory. It ships the **blocks** a factory calls at
 
 | Station | Block | Status |
 |---|---|---|
-| Intent | `hien`, `brain` | have |
+| Intent | `think-with-me`, `brain` | have |
 | Map, Slice | `slice-spec` | have; writes the spec that Build and Decide read |
 | Build | the harness's own workers | not ours |
-| Verify | the "agents check before the human reviews" rule in `AGENTS.md` | rule, not yet a block |
+| Verify | `codebase-rubric`, plus the "agents check before the human reviews" rule in `AGENTS.md` | have; a periodic scorecard, not a per-change gate |
 | Decide | `decision-checker` | have; first block that runs as a gate |
 | Learn | `brain` stores lessons | half: nothing feeds them back yet |
 | (the human) | `behavioral-story-depth`, `radio-system-design-practice` | have; human-facing on purpose |
@@ -93,7 +93,7 @@ agent-skills/
 1. **`python3 tools/validate.py`** — structure and wiring. Errors fail CI; warnings are advisory.
 2. **Evals** — `evals/<name>.md` lists prompts and what a good and a bad response look like. Run by hand for now: paste the prompt into a fresh session with the skill loaded and grade against the case. Automate only after the cases have caught a real regression.
 
-CI: `.github/workflows/validate.yml` runs the validator on every push and PR.
+CI: `.github/workflows/validate.yml` runs the validator and the `codebase-rubric` script tests on every push to `main` and every PR.
 
 ## What we deliberately didn't adopt (yet)
 
@@ -112,6 +112,21 @@ CI: `.github/workflows/validate.yml` runs the validator on every push and PR.
 ## Decisions log
 
 Newest first. Each entry says what we decided, why, what we turned down, where it can fail, and when to revisit it.
+
+### 2026-11-06: `codebase-rubric` is the Verify block
+
+- **Decision:** a periodic health check that writes `scorecards/<date>.md`: a size table (500, 800, 1,000 lines), five areas scored 1-5 by five independent scorers with `path:line` evidence, one failure traced end to end, and the change since the last scorecard. Three standard-library scripts own the mechanics (`size_report.py`, `check_scorecard.py --repo`, `delta.py`); agents own the judgment. Built from the spec in `specs/codebase-rubric/`, the first spec written by `slice-spec`.
+- **Why:** the size tiers and five areas came from a rubric the user shared. Size is report only; enforcement is left to adopting dzhng's `ratchet-files` later. One scorer per area, because a single scorer gave every area the same score on two repos (all 3s, then all 4s); five independent scorers gave keen-design-system 4, 4, 3, 4, 3 and brain-cli 4, 3, 3, 3, 4, each from a counted sample.
+- **Turned down:** blocking commits (a second gate on every change), running live failures (slow and fragile across repos), and one scorer for all areas (one impression leaks across all five).
+- **Where it can fail:** about five scorers' worth of tokens per run; scores rest on samples, so a different sample can move a score by one; git history that is squashed limits the Modularity evidence (folder layout stands in). Four `decision-checker` ledgers ran during the build. The unsound calls they found were fixed, or settled by one of the user's calls; the user made 14 calls along the way.
+- **Revisit when:** a repo's second scorecard shows whether the delta catches real change, or scores swing by more than one between runs with no code change.
+
+### 2026-11-06: Rename `/hien` to `/think-with-me`
+
+- **Decision:** the skill is now `think-with-me` (folder, commands, Cursor link, eval, docs, manifests). Its persona and knowledge files are unchanged.
+- **Why:** the user's call. A name that says what the skill does reads better next to the other blocks.
+- **Where it can fail:** the skill fetches its knowledge files from `main`. Until this rename is merged, `skills/think-with-me/` doesn't exist there, so `SKILL.md` falls back to the old `skills/hien/` URLs. After the merge, the old URLs 404 and the new ones serve. Anyone who installed the old name keeps `/hien` until they reinstall.
+- **Revisit when:** merged; then drop the `skills/hien/` fallback line.
 
 ### 2026-11-06: `slice-spec` is the second factory block
 

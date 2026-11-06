@@ -35,10 +35,11 @@ Your time goes into the facts in step 1 and the answers in steps 2 to 4. The ski
 
 ### À la carte
 
-- **Think a problem through.** `/hien` loads my tools, opinions, and voice, then helps you think and build the way I would.
+- **Think a problem through.** `/think-with-me` loads my tools, opinions, and voice, then helps you think and build the way I would.
 - **"Did I already decide this?"** `/brain` searches your notes before the agent answers from general knowledge.
 - **One story keeps collapsing.** `/behavioral-story-depth` in Drill mode on just that story.
 - **A feature is too big to hand over.** `/slice-spec` interviews you, then writes a spec of small slices with a pass/fail check each. Agents build from it; `/decision-checker` audits against it.
+- **Is this codebase getting better or worse?** `/codebase-rubric` writes a dated scorecard with evidence you can check in under a minute, and shows what changed since the last one.
 - **An agent just finished a change.** `/decision-checker` lists the calls it made where your prompt was silent, least confident first. Review that instead of the diff.
 
 ## Quick start
@@ -62,11 +63,12 @@ mkdir -p ~/.agents/skills && ln -s ~/src/agent-skills/skills/* ~/.agents/skills/
 **Any agent (skills CLI):** install everything with the command at the top, or pick one:
 
 ```bash
-npx skills add phuhien92/agent-skills --skill hien
+npx skills add phuhien92/agent-skills --skill think-with-me
 npx skills add phuhien92/agent-skills --skill radio-system-design-practice
 npx skills add phuhien92/agent-skills --skill behavioral-story-depth
 npx skills add phuhien92/agent-skills --skill slice-spec
 npx skills add phuhien92/agent-skills --skill decision-checker
+npx skills add phuhien92/agent-skills --skill codebase-rubric
 npx skills add phuhien92/agent-skills --skill brain   # needs the brain CLI: npm install -g github:phuhien92/brain-cli
 ```
 
@@ -79,6 +81,12 @@ npx skills add phuhien92/agent-skills --skill brain   # needs the brain CLI: npm
 | [behavioral-story-depth](skills/behavioral-story-depth/SKILL.md) | Turns a real story into a 75 to 90 second opener plus a deep Actions layer that survives about five minutes of probing. Maps stories to Amazon LPs and drills follow-ups. | "Tell me about a time…" prep, Amazon LP loops, a story that collapses on follow-up |
 | [radio-system-design-practice](skills/radio-system-design-practice/SKILL.md) | Coaches RADIO (Requirements, Architecture, Data model, Interfaces, Optimizations). Hidden rubric, one question, score, lock, next. | System design practice, news feed / autocomplete / docs / chat, `@solution.md` or an Excalidraw board |
 
+### Verify: measure what the factory built
+
+| Skill | What it does | Use when |
+|---|---|---|
+| [codebase-rubric](skills/codebase-rubric/SKILL.md) | Writes a scorecard: files over 500, 800, and 1,000 lines, plus a 1-5 score for architecture, modularity, abstraction, components, and errors. Five independent scorers, every score backed by `path:line`, one failure traced end to end, and the change since the last scorecard. | A periodic health check, before a big refactor, or to see whether the codebase is drifting |
+
 ### Build: check what the factory decided
 
 | Skill | What it does | Use when |
@@ -90,7 +98,7 @@ npx skills add phuhien92/agent-skills --skill brain   # needs the brain CLI: npm
 
 | Skill | What it does | Use when |
 |---|---|---|
-| [hien](skills/hien/SKILL.md) | Summons Hien Luong (Raymond): loads ENTRY, TOOLS, OPINIONS, and VOICE, then helps you think and build. | `/hien`, or when asked how Hien thinks, builds, or solves problems |
+| [think-with-me](skills/think-with-me/SKILL.md) | Summons Hien Luong (Raymond): loads ENTRY, TOOLS, OPINIONS, and VOICE, then helps you think and build. | `/think-with-me`, or when asked how Hien thinks, builds, or solves problems |
 | [brain](skills/brain/SKILL.md) | Searches and updates your markdown vault (Obsidian or similar) through the [brain CLI](https://github.com/phuhien92/brain-cli): ranked search, notes by name, one-file-per-entry memory that syncs across machines. | Questions about your notes, past decisions or preferences; recording a lesson worth keeping. Requires the CLI |
 
 ## Project structure
@@ -100,7 +108,7 @@ agent-skills/
 ├── skills/
 │   ├── brain/
 │   │   └── SKILL.md           # source of truth: phuhien92/brain-cli
-│   ├── hien/
+│   ├── think-with-me/
 │   │   ├── SKILL.md
 │   │   ├── ENTRY.md
 │   │   ├── TOOLS.md
@@ -117,10 +125,15 @@ agent-skills/
 │   │   ├── ledger.md
 │   │   ├── harness.md
 │   │   └── hooks/require-ledger.sh
-│   └── slice-spec/
+│   ├── slice-spec/
+│   │   ├── SKILL.md
+│   │   ├── spec-format.md
+│   │   └── drafting.md
+│   └── codebase-rubric/
 │       ├── SKILL.md
-│       ├── spec-format.md
-│       └── drafting.md
+│       ├── rubric.md
+│       ├── scorecard.md
+│       └── scripts/           # size_report, check_scorecard, delta, and their tests
 ├── .claude/commands/          # Claude Code slash commands
 ├── .cursor/skills/            # Cursor: symlink to skills/
 ├── commands/                  # Extra slash-command copies
@@ -135,14 +148,15 @@ Each skill is a workflow, not a dump of notes:
 
 - YAML frontmatter: `name` + `description` (what + when)
 - Steps the agent must follow
-- Supporting files loaded only when needed (`examples.md`, or `/hien` knowledge files)
+- Supporting files loaded only when needed (`examples.md`, or `/think-with-me` knowledge files)
 
-`/hien` keeps ENTRY, TOOLS, OPINIONS, and VOICE next to the skill so they do not collide with other skills in this pack.
+`/think-with-me` keeps ENTRY, TOOLS, OPINIONS, and VOICE next to the skill so they do not collide with other skills in this pack.
 
 ## Checks
 
 ```bash
 python3 tools/validate.py   # wiring + structure, runs in CI
+python3 -m unittest discover -s skills/codebase-rubric/scripts   # codebase-rubric scripts, runs in CI
 ```
 
 Behavior cases live in `evals/`. See [ARCHITECTURE.md](ARCHITECTURE.md) for the layout and rules.
