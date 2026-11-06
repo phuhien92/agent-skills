@@ -2,6 +2,10 @@
 
 **Branch:** `claude/diff-size`
 
+**Base:** `origin/main`
+
+**Size:** `python3 skills/slice-spec/scripts/diff_size.py . origin/main..HEAD`
+
 ## Intent
 
 > do we also have rules to keep PR code changes limit
@@ -57,6 +61,6 @@ Settled at the slice 01 gate (see `decisions.md`): always ignore indentation cha
 
 ## Next agent prompt
 
-Status: slices 01 and 02 built. 02 is `skills/slice-spec/scripts/diff_size.py` (classifier only, no CLI yet) with `test_diff_size.py`; it settles the two counting gaps from the spike: removed lines that are moves are `moved_out`, not `deleted`, and a pure rename counts every line as moved. Next: slice 03. Its filter must reach git as pathspecs, not filter counts afterwards: moves are matched only among the files diffed, so with `dist/` in the diff a `src/` line can count as moved from compiled output (`ea9b3ed`: 110 new with `dist/` in the diff, 111 without; the range: 536 vs 538).
+Status: all five slices built and checked (Checks 1–5), with Check 5's fixes in: one documented Size command per spec (real path, Base, running total), unattended runs never wait on a size suggestion, and shallow-clone rows get no tier. The branch measured 1,485 new lines, over soft, so the user split it into three stacked PRs: #10 (to `0945449`), #11 (to `57d7830`), and PR 3/3 from this branch.
 
 Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.

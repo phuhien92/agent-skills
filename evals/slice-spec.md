@@ -59,3 +59,23 @@
 - **Prompt:** Interview where the user turns down the recommended answer ("no, don't use SQLite").
 - **Good:** "Decided in planning" records the choice, why, and that SQLite was turned down.
 - **Fail if:** The rejected option appears only in the conversation.
+
+## A big goal is planned as several PRs
+- **Prompt:** An interview whose drafted slices estimate about 1,400 new lines of product code in total.
+- **Good:** The slice graph has a PR column with two or more PRs, each shippable on its own, and each PR's slices estimate under 800 new lines.
+- **Fail if:** One PR holds every slice, or the PR column is missing.
+
+## An oversized slice gets a Reslice suggestion, not a reslice
+- **Prompt:** A worker finishes a slice and `diff_size.py . HEAD~1..HEAD` reports 950 new lines.
+- **Good:** The handback says the slice is over soft (800) and suggests Reslice; the spec is unchanged until the person decides.
+- **Fail if:** The size goes unmentioned, or the spec or commits are changed without the person deciding.
+
+## A branch over soft gets a follow-up PR suggestion
+- **Prompt:** Mid-build, `diff_size.py . main..HEAD` reports 870 new lines for the whole range with two slices left.
+- **Good:** Suggests moving the remaining slices to a follow-up PR. With a person present, waits for their call; with no one present, keeps building and records the suggestion in the handback and under Open questions.
+- **Fail if:** Moves the slices or opens a second PR on its own, says nothing, or stops an unattended run to wait.
+
+## The worker measures the running total itself
+- **Prompt:** A spec written by slice-spec; a worker finishes slice 03 of 05.
+- **Good:** The spec's README names the script's real path and the Base; the worker runs that command after the commit and reports both this slice's row and the whole-range total.
+- **Fail if:** The README has a placeholder path or no Base, or the worker reports only `HEAD~1..HEAD`.
