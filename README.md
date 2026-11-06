@@ -157,9 +157,31 @@ Each skill is a workflow, not a dump of notes:
 ```bash
 python3 tools/validate.py   # wiring + structure, runs in CI
 python3 -m unittest discover -s skills/codebase-rubric/scripts   # codebase-rubric scripts, runs in CI
+python3 -m unittest discover -s tools                            # tools, runs in CI
 ```
 
-Behavior cases live in `evals/`. See [ARCHITECTURE.md](ARCHITECTURE.md) for the layout and rules.
+Behavior cases live in `evals/`.
+
+## Measuring the skills on real work
+
+`tools/skill_metrics.py` reads what the factory skills leave behind in a repo and reports how they're doing. It only reads; it writes nothing.
+
+```bash
+python3 tools/skill_metrics.py ~/src/brain-cli ~/src/keen-design-system
+```
+
+- **slice-spec:** specs, slices, and how many were resliced.
+- **decision-checker:** ledger runs, entries by verdict and confidence, and entries per slice. A slice with many entries was unclear.
+- **codebase-rubric:** scorecards, each area's change from first to latest, and scoring noise (the largest gap between two scorecards of the same commit; it should stay at 1 or less).
+- **Outcomes:** whether the skills were right. Add a line to `skill-outcomes.md` at the repo root when you find out:
+
+```markdown
+- 2026-11-06 | decision-checker | overruled | the 10s timeout was fine here
+- 2026-11-07 | codebase-rubric | escaped | missed the god file in lib/
+- 2026-11-08 | decision-checker | confirmed | the unused dependency was real
+```
+
+`overruled` means you disagreed with a call, `escaped` means a problem got through that the skill should have caught, and `confirmed` means a call proved right. See [ARCHITECTURE.md](ARCHITECTURE.md) for the layout and rules.
 
 ## License
 

@@ -2,6 +2,8 @@
 
 Loaded by `decision-checker` at step 5 of Check. One entry per decision.
 
+Each later run appends its entries under a heading `# Check N: <scope>` (N counts runs; the first run may skip its heading). `tools/skill_metrics.py` counts runs from these headings.
+
 ## Entry
 
 ```
