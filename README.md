@@ -1,32 +1,45 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="agent-skills: personal skills for AI coding agents, one folder per skill, one slash command to start it" width="100%">
+  <img src="assets/hero.svg" alt="agent-skills: AI skills that make you sharper, not just faster. Cleared practice rounds for recall, stories, design, and thinking, with the probes you haven't heard yet still open." width="100%">
 </p>
 
 # Agent Skills
 
-Personal skills for AI coding agents. Layout matches the [Agent Skills](https://github.com/addyosmani/agent-skills) pack: one directory per skill, slash commands as entry points, plugin manifests for Claude Code / Cursor.
+**AI skills that make you sharper, not just faster.** Built for interview prep and hard thinking, not for shipping answers faster. Each skill is a folder with a slash command, and runs in Claude Code, Cursor, or any agent that reads `SKILL.md`.
 
-```
-  HIEN                         PRACTICE
- ┌──────────────────────────┐ ┌──────────────────────────────────┐
- │  Think and build         │ │  RADIO system design coaching    │
- │  like Hien               │ │  one question → lock → next      │
- └──────────────────────────┘ └──────────────────────────────────┘
-  /hien                        /radio-system-design-practice
+```bash
+npx skills add phuhien92/agent-skills
 ```
 
-## Commands
+`/brain` also needs the [brain CLI](https://github.com/phuhien92/brain-cli): `npm install -g github:phuhien92/brain-cli`.
 
-| What you're doing | Command | Key principle |
-|---|---|---|
-| Think and build with Hien's tools, opinions, and voice | `/hien` | Load ENTRY + knowledge files, then route |
-| Practice a frontend system design interview | `/radio-system-design-practice` | RADIO, one question at a time |
-| Build or drill a behavioral story (Amazon LP loops and others) | `/behavioral-story-depth` | Short opener, deep Actions, no invented facts |
-| Search your notes and long-term memory | `/brain` | Ranked search first, rephrase before giving up |
+## Why
+
+AI makes it easy to produce a good answer fast. Interviews and real work test something else: whether the answer holds up on the second follow-up. "What did *you* do?" "What else did you consider?" "How did you know it worked?" A polished answer with nothing underneath falls apart right there.
+
+The practice skills work the other way around. They start at the second follow-up. They probe one question at a time, hold you to what you answered, and only then move on. Nothing gets invented along the way. A missing metric or name becomes a question for you, never a placeholder that reads like the truth.
+
+The agent does the grinding: it asks, probes, and checks your work. You do the part only you can do: supply the real facts and judge the result.
+
+## How to use
+
+Run a full prep loop, or grab one skill when you need it. None of them depends on another.
+
+### The full loop: prep for an interview loop
+
+1. **Recall.** `/brain` on the role or company. Pull past projects, decisions, and wins out of your notes so you start from facts, not memory.
+2. **Build the stories.** `/behavioral-story-depth` on each real story. You get a 75 to 90 second opener plus a deep Actions layer. Then use Map mode to spread your stories across the loop's Leadership Principles.
+3. **Drill the follow-ups.** Run the same skill in Drill mode. It asks 4 to 6 follow-ups, one at a time, then names the slips that keep repeating.
+4. **Practice the design round.** `/radio-system-design-practice` on a classic prompt. RADIO, one question at a time, scored and locked before the next.
+
+Your time goes into the facts in step 1 and the answers in steps 2 to 4. The skill keeps the pressure on in between.
+
+### À la carte
+
+- **Think a problem through.** `/hien` loads my tools, opinions, and voice, then helps you think and build the way I would.
+- **"Did I already decide this?"** `/brain` searches your notes before the agent answers from general knowledge.
+- **One story keeps collapsing.** `/behavioral-story-depth` in Drill mode on just that story.
 
 ## Quick start
-
-**Cursor** — this repo already maps `skills/` into `.cursor/skills/` (symlink). Open the repo, or add it as a project skill pack.
 
 **Claude Code**
 
@@ -35,9 +48,9 @@ Personal skills for AI coding agents. Layout matches the [Agent Skills](https://
 /plugin install agent-skills@agent-skills
 ```
 
-Then run `/hien` or `/radio-system-design-practice`.
+**Cursor:** this repo already maps `skills/` into `.cursor/skills/` with a symlink. Open the repo, or add it as a project skill pack.
 
-**Any agent (skills CLI)**
+**Any agent (skills CLI):** install everything with the command at the top, or pick one:
 
 ```bash
 npx skills add phuhien92/agent-skills --skill hien
@@ -48,12 +61,19 @@ npx skills add phuhien92/agent-skills --skill brain   # needs the brain CLI: npm
 
 ## Skills
 
+### Practice: hold up under follow-up
+
+| Skill | What it does | Use when |
+|---|---|---|
+| [behavioral-story-depth](skills/behavioral-story-depth/SKILL.md) | Turns a real story into a 75 to 90 second opener plus a deep Actions layer that survives about five minutes of probing. Maps stories to Amazon LPs and drills follow-ups. | "Tell me about a time…" prep, Amazon LP loops, a story that collapses on follow-up |
+| [radio-system-design-practice](skills/radio-system-design-practice/SKILL.md) | Coaches RADIO (Requirements, Architecture, Data model, Interfaces, Optimizations). Hidden rubric, one question, score, lock, next. | System design practice, news feed / autocomplete / docs / chat, `@solution.md` or an Excalidraw board |
+
+### Think and recall: start from what you know
+
 | Skill | What it does | Use when |
 |---|---|---|
 | [hien](skills/hien/SKILL.md) | Summons Hien Luong (Raymond): loads ENTRY, TOOLS, OPINIONS, and VOICE, then helps you think and build. | `/hien`, or when asked how Hien thinks, builds, or solves problems |
 | [brain](skills/brain/SKILL.md) | Searches and updates your markdown vault (Obsidian or similar) through the [brain CLI](https://github.com/phuhien92/brain-cli): ranked search, notes by name, one-file-per-entry memory that syncs across machines. | Questions about your notes, past decisions or preferences; recording a lesson worth keeping. Requires the CLI |
-| [radio-system-design-practice](skills/radio-system-design-practice/SKILL.md) | Coaches RADIO (Requirements → Architecture → Data model → Interfaces → Optimizations). Hidden rubric, one question, score, lock, next. | System design practice, news feed / autocomplete / docs / chat, `@solution.md` or an Excalidraw board |
-| [behavioral-story-depth](skills/behavioral-story-depth/SKILL.md) | Turns a real story into a 75–90s opener plus a deep Actions layer that survives ~5 min of probing; maps stories to Amazon LPs; drills follow-ups. | "Tell me about a time…" prep, Amazon LP loops, a story that collapses on follow-up |
 
 ## Project structure
 
