@@ -170,3 +170,193 @@ Five of the twelve entries sit on slice 04's skip rules (the `.gitattributes` ma
 ## Next step
 
 The user reviews `rubric.md` (slice 01) with the "How to score" and "shared on X" entries in hand, and decides how to handle the red `validate.py` check, before 02 and 03 start. Fix the `.gitattributes` match and the silent drops in 04 before 05 and 06 read its output.
+
+---
+
+# Check 2: slice 05, and rubric and size-script changes since check 1
+
+Check mode, run unattended (rule 7): no user present, every confidence capped at medium, saved without asking. Baseline: `specs/codebase-rubric/README.md` plus `slices/`. User approvals recorded under "Decided in planning" (size rules, tie rule, keen as second repo, one scorer per area, "not scored", "most" as two-thirds, 02 and 03 accepted) are the user's calls and aren't listed. Check 1's entries were applied in `19567d2` (git `check-attr`, symlinks counted, provenance line, `validate.py` check restored) and aren't re-listed.
+
+- **Scope:** `6b3494a..d08119c` (`19567d2`, `fe979bc`, `ddb308e`, `91b2636`, `90d0b16`, `d08119c`). Focus: slice 05 (`scorecard.md`, `scripts/check_scorecard.py`, `scripts/test_check_scorecard.py`, `scripts/fixtures/good-keen.md`), plus changes to `rubric.md`, `size_report.py`, and the slice files.
+- **Self-report:** the implementer isn't live. Its commit messages and the README "Next agent prompt" name no guesses, so this check rests on tracing.
+- **Evidence run:** `python3 -m unittest discover -s skills/codebase-rubric/scripts` passes 16 tests. `check_scorecard.py` exits 0 on `good-keen.md`. `size_report.py` on brain-cli at `7045e68` lists the same three files as before (skipped: lockfile 1, symlink or not a file 1, not a code file 57, vendored or build folder 17). `tools/validate.py` exits 1, which the user accepted (no PR until 08). Throwaway checker probes ran outside the repo and were deleted. No keen-design-system clone exists here, so fixture values about that repo could not be checked.
+- **Skipped as delegated:** marker names and section headings (05).
+- **Trivial, folded:** 3 calls. The checker exits 2 on a usage error or unreadable file; `Date` and `Commit` are checked for presence, not format; `git check-attr` values other than `set` or `true` (such as `linguist-generated=1`) don't count as marked.
+
+## Check these first
+
+1. Any area, Errors included, can be "not scored", and then no error trace is required (needs-you, low).
+2. The Modularity 5 anchor was loosened after the user approved `rubric.md` (unsound, low).
+3. Stylesheets, HTML, MDX, and YAML count as "not a code file" (needs-you, low).
+
+Five of the sixteen entries sit on how strict `check_scorecard.py` is (not-scored escape, sample counts, citations, unmarked skip counts, template rules it doesn't enforce). Slice 05's check named five failure cases and the checker covers exactly those, in shape only. The plan was foggy on what "a script can verify it" must prove beyond shape. Recommend sending that back through the spec before 06 builds on `parse` and 07 relies on the checker as its gate.
+
+## needs-you
+
+### Any area, Errors included, can be "not scored", and then no error trace is required
+
+- **When:** `d08119c`, `check_scorecard.py` `problems` (`errors_scored`)
+- **Slice:** 05
+- **What happens now:** a scorecard marks Errors "not scored" with a scope and a reason, and leaves the trace section empty. The checker passes it. A probe marked all five areas "not scored" with no trace: the checker printed "ok" and exited 0. So an unattended run that scores nothing still passes the gate 07 relies on. The obvious alternative keeps the success test's floor: Errors always gets a score and a traced path, and only a limited number of other areas may be "not scored".
+- **The gap:** slice 05 says a "not scored" area "passes only with a reason and a named scope" but not whether Errors may be skipped or how many areas may be. The intent says the scorecard has "a 1–5 score for each of the five areas" and "the error-tracing score includes one real failure path traced end to end".
+- **Reach:** 07's check is "`check_scorecard.py` exits 0", so this sets the minimum a real run must produce. 06 must also handle "not scored" on both sides of a delta.
+- **Verdict:** needs-you. How much a run may decline to score is the user's call. **Recommended call:** Errors may never be "not scored" (if no failure path is reachable, score it from what exists and say so), and fail the scorecard if more than two areas are "not scored". **To reverse:** delete those two checks; `errors_scored` returns to skipping the trace.
+- **Confidence:** low
+
+### Stylesheets, HTML, MDX, and YAML count as "not a code file"
+
+- **When:** `fe979bc`, `size_report.py` `CODE_EXTENSIONS`, `CODE_NAMES`
+- **Slice:** 04
+- **What happens now:** the user decided "code files only (docs, data, and images count as not code)". The worker turned that into a fixed list of about 70 extensions. `.sql`, `.sh`, `.tf`, `.proto`, and `.graphql` count as code. `.css`, `.scss`, `.less`, `.html`, `.mdx`, and `.yaml` don't, so a 1,200-line stylesheet in a design system is skipped as "not a code file" and never reaches the size table. The keen fixture shows 61 such skips (unverified). The obvious alternative treats only what the user named (docs, data, images) as not code and counts stylesheets and markup as code.
+- **The gap:** the user named three kinds of non-code; the spec gives no list, and stylesheets, templates, and config are none of the three.
+- **Reach:** keen-design-system is the second test repo and a UI library, so the size table on the repos the user is calibrating with depends on this list.
+- **Verdict:** needs-you. Where code ends is the user's definition. **Recommended call:** add `.css`, `.scss`, `.sass`, `.less`, `.html`, and `.mdx` to the code list; keep YAML, JSON, and Markdown as not code. **To reverse:** remove those extensions from `CODE_EXTENSIONS`.
+- **Confidence:** low
+
+### The rubric's sampling and "too little code" rules carry thresholds the user didn't set
+
+- **When:** `91b2636`, `rubric.md` "How to score" rules 5 and 6
+- **Slice:** 01
+- **What happens now:** a scorer samples "at least six, or all of them if fewer" units for its area, and may mark the area "not scored" when it has "fewer than three units or no failure path a person can reach". On keen-design-system, every scorer set aside `packages/keen` (5 small files) as too little to score. The user approved "most" as two-thirds of a listed sample and a "not scored" option; the numbers six and three, and "no failure path a person can reach" as a reason to skip Errors, came from the worker.
+- **The gap:** the approval recorded the idea, not the thresholds.
+- **Reach:** a sample of six makes "most" mean 4 of 6, which one file can tip. The "no failure path" clause is what lets Errors escape the trace (entry above).
+- **Verdict:** needs-you. The thresholds set how often areas go unscored. **Recommended call:** keep six and three, and drop "no failure path a person can reach" from rule 6 if the user takes the Errors recommendation above. **To reverse:** restore rules 5 and 6 as written in `91b2636`.
+- **Confidence:** low
+
+### Without a way to spawn agents, one scorer scores all five areas in turn, and the scorecard says so
+
+- **When:** `91b2636`, `slices/07-skill-flow.md` Decided; `d08119c`, meta key `Scorers independent`
+- **Slice:** 07, 05
+- **What happens now:** a run in a tool that can't spawn subagents scores one area at a time, writing each score before reading the next area's anchors, and sets `Scorers independent | no` in the meta table. The checker accepts `no`. The obvious alternative stops with a clear error, since the user approved per-area scorers because a single scorer carried one impression across every area (keen scored all 4s that way).
+- **The gap:** the user approved one fresh scorer per area but didn't say what happens when that isn't possible. The worker added the fallback to 07's **Decided** list, where the next worker will read it as the user's call.
+- **Reach:** the fallback produces the exact failure the change was meant to fix, labeled but still passing the checker.
+- **Verdict:** needs-you. It trades the reason for the change against never blocking a run. **Recommended call:** keep the fallback (unattended runs must not block) but move it out of 07's Decided list into an open question until the user confirms it. **To reverse:** delete the Decided line and the `Scorers independent` meta key.
+- **Confidence:** medium
+
+### Citations are checked for shape only, never against the repo
+
+- **When:** `d08119c`, `check_scorecard.py` `CITATION`
+- **Slice:** 05
+- **What happens now:** a score whose evidence is `` `nope:1` `` or `` `localhost:8080` `` passes (probe). The checker reads only the scorecard, so a cited path that doesn't exist, or a line past the end of the file, is never caught. The obvious alternative takes the target repo as an optional argument and checks every cited path exists and every line is within the file.
+- **The gap:** slice 05 asks for a shape "a script can verify" and lists "a score without a file:line" as a failure, without saying whether the file:line must be real.
+- **Reach:** the user's trust test is checking any score against its evidence in under a minute; a citation to a missing file fails that test, and an unattended 07 run would not notice.
+- **Verdict:** needs-you. It adds a second input to the checker's contract. **Recommended call:** add `--repo <path>` that checks each cited path and line range against the target repo, and have 07 always pass it. **To reverse:** remove the flag; the shape check stays.
+- **Confidence:** medium
+
+## unsound
+
+### The Modularity 5 anchor was loosened after the user approved `rubric.md`
+
+- **When:** `90d0b16`, `rubric.md` Modularity
+- **Slice:** 01
+- **What happens now:** the README records `rubric.md` as "approved as written" by the user. Afterwards the worker added to the 5 anchor: "If the history is squashed or too short to show one, use the folder layout instead: each feature or concern has its own folder or prefix." A repo with tidy folders can now earn a 5 without any history showing that a feature change touches a short list of files. The finding came from the 03c spike; the README lists no approval for this edit, unlike the tie rule and "not scored". The obvious alternative records the finding as an open question and leaves the approved anchor alone until the user decides.
+- **The gap:** the spec didn't foresee squashed history.
+- **Reach:** a 5 gets easier to reach, and later workers learn that approved anchors can change mid-build.
+- **Verdict:** unsound. It changes the approved baseline without approval, the same pattern check 1 flagged for the `validate.py` line. **Redo from:** edits to `rubric.md` after approval take effect only once the README records the user approving them.
+- **Confidence:** low
+
+### The keen fixture states facts no spike recorded, and drops a hop from the trace
+
+- **When:** `d08119c`, `scripts/fixtures/good-keen.md`
+- **Slice:** 05
+- **What happens now:** the fixture says it is "built from `specs/codebase-rubric/spikes/03c-per-area-keen.md`". Its scores, samples, and citations match 03c. But the commit `847e726` and the skip line ("generated header: 4, lockfile: 2, not a code file: 61") appear in no spike, and no keen clone is present to confirm them. The trace has four hops where 03c lists five (it drops `resolve.ts:23`). Bad cases are made by string edits in the tests, not fixture files, and the brain-cli spikes (02, 03) aren't used. The obvious alternative copies only recorded values and marks anything else as a placeholder.
+- **The gap:** slice 05 says "Fixtures come from the spike outputs in 02 and 03" without saying what to do with fields the spikes didn't record.
+- **Reach:** the README calls this "a fixture from the keen per-area run"; a later reader, or 06's tests, may treat the skip counts and SHA as real.
+- **Verdict:** unsound. A fixture claimed as spike output contains values with no source. **Redo from:** every fixture value either comes from a recorded spike or a real script run, or is marked as illustrative.
+- **Confidence:** low
+
+### Each scorer is meant to see only its area's section, which leaves out the shared "How to score" rules
+
+- **When:** `91b2636`, `slices/07-skill-flow.md` Seam; `rubric.md` line 3
+- **Slice:** 07, 01
+- **What happens now:** 07's seam says each scorer is "given only `rubric.md`'s section for its area plus the repo path". The rules a scorer must follow (evidence first, the tie rule, sample at least six and count two-thirds, "not scored", name the scope) live in "How to score", which isn't any area's section. Read literally, a scorer never sees them, and the scorecard's `Sample` and `Scope` columns then have no rule behind them. The obvious alternative gives each scorer "How to score" plus its own area.
+- **The gap:** the user approved "a scorer that sees only its own area"; the wording of what "its own area" includes was the worker's.
+- **Reach:** 07 will be built from this seam line.
+- **Verdict:** unsound. The wording drops rules the scorer needs. **Redo from:** each scorer receives the shared "How to score" rules and its own area's anchors, and nothing about other areas or their scores.
+- **Confidence:** medium
+
+### Skip counts sit outside the markers, and the size table isn't validated
+
+- **When:** `d08119c`, `scorecard.md` Size section; `check_scorecard.py` `parse`
+- **Slice:** 05
+- **What happens now:** the `Skipped:` line is plain text below `<!-- size:end -->`. Deleting it still passes (probe), and no script can read it back. Size rows aren't checked either: a row `| foo | lots | huge |` passes (probe). The template says to paste `size_report.py` rows, whose Tier text is "over hard (1000)", while the JSON uses `hard`; 06 must parse whichever lands there. The obvious alternative puts skip counts in their own marked table using the stable slug keys, requires numeric line counts, and fixes one tier vocabulary.
+- **The gap:** slice 05's Decided list includes "skip counts" as a section, and the README says "the scorecard lists skip counts so misses are visible". Neither says they must be machine-checked.
+- **Reach:** 06 detects tier moves from these rows; a missing skip line hides exactly the misses the README wanted visible.
+- **Verdict:** unsound. A decided section can go missing and the checker still passes. **Redo from:** every section in slice 05's Decided list is required by the checker, and the tables 06 reads (size rows and skip counts) are marked, with numeric lines and one fixed tier vocabulary.
+- **Confidence:** medium
+
+### A sample is checked for the words "N of M" only
+
+- **When:** `d08119c`, `check_scorecard.py` `SAMPLE`
+- **Slice:** 05
+- **What happens now:** `9 of 3` and `0 of 0` both pass (probe). The rubric says a 4 or a 2 needs the anchor to fit at least two-thirds of a sample of at least six (or all units if fewer), and the checker tests none of it. The obvious alternative at least requires `1 <= N <= M`.
+- **The gap:** slice 05 lists "each area's sample" as a section without saying what makes one valid.
+- **Reach:** the sample is the only number that lets a person check why a score is a 4 and not a 3; an impossible fraction makes it noise.
+- **Verdict:** unsound. A count above its own sample size passes. **Redo from:** a sample is a count out of a non-empty set, `N <= M` and `M >= 1`. Whether the checker should also test two-thirds against the score is a separate call for the user.
+- **Confidence:** medium
+
+### The template's "rules the checker enforces" and the checker disagree
+
+- **When:** `d08119c`, `scorecard.md` rule list; `check_scorecard.py` `problems`
+- **Slice:** 05
+- **What happens now:** the template says "Not scored ... Sample is `-`", but a "not scored" row with `7 of 10` passes (probe). The other way round, the checker fails a numeric score with no Scope, but the template's rule list doesn't mention Scope for numeric scores. An agent filling the template follows one, the checker enforces the other. The obvious alternative keeps one list, matched by the tests.
+- **The gap:** the spec doesn't say whether the template or the script is the source of truth for the rules.
+- **Reach:** 07's SKILL.md will point at the template; 06 reads what the checker accepts.
+- **Verdict:** unsound. The heading promises enforcement that doesn't exist. **Redo from:** each rule the template lists as enforced has a check and a test, and every check the script makes is in that list.
+- **Confidence:** medium
+
+## sound
+
+### "Package root" means a folder holding one of 12 manifest files
+
+- **When:** `fe979bc`, `size_report.py` `PACKAGE_MARKERS`, `in_build_dir`
+- **Slice:** 04
+- **What happens now:** `packages/app/dist/bundle.js` is skipped because `packages/app/package.json` exists; `src/build/compiler.ts` is counted because `src/` has no manifest. The markers are `package.json`, `pyproject.toml`, `setup.py`, `Cargo.toml`, `go.mod`, `pom.xml`, Gradle files, `composer.json`, `Gemfile`, `mix.exs`, and `pubspec.yaml`, checked on disk.
+- **The gap:** the user said "repo root or a package root" without defining a package root.
+- **Reach:** a language with an unlisted manifest gets its `dist/` counted; adding a name is one line.
+- **Verdict:** sound. It's the usual meaning of a package root.
+- **Confidence:** medium
+
+### Skip reasons are tried in a fixed order, so each file counts once under the first match
+
+- **When:** `fe979bc`, `size_report.py` `skip_reason`
+- **Slice:** 04
+- **What happens now:** lockfile, then vendored or build folder, then not code, then marked by git, then binary, then generated header. A Markdown file inside `dist/` counts as "vendored or build folder", not "not a code file", and a PNG counts as "not a code file", so "binary" now fires only for code-named files.
+- **The gap:** the spec lists skip kinds, not their precedence.
+- **Reach:** totals stay right; per-reason counts shift if the order changes, which 06 would see as a delta.
+- **Verdict:** sound
+- **Confidence:** medium
+
+### The five areas must appear with exact names, in a fixed order
+
+- **When:** `d08119c`, `check_scorecard.py` `AREAS`
+- **Slice:** 05
+- **What happens now:** a scorecard listing Errors before Components, or writing "Error handling", fails with "areas must be Architecture, Modularity, Abstraction, Components, Errors in order".
+- **The gap:** the spec names the five areas but not order or spelling.
+- **Reach:** lets 06 match rows by name without fuzzy matching.
+- **Verdict:** sound
+- **Confidence:** medium
+
+### An error trace needs at least two numbered hops, each starting with a `path:line`
+
+- **When:** `d08119c`, `check_scorecard.py` `parse`, `problems`
+- **Slice:** 05
+- **What happens now:** only lines starting with `1.`, `2.`, ... between the trace markers count as hops. One hop fails; a bullet list counts as zero hops and fails. Whether the hops really connect, end to end, is left to the person.
+- **The gap:** the spec says "error trace hop by hop" and fails on "no error trace", without a minimum.
+- **Reach:** two hops is a low floor (02 had 9, 03c had 5), but any more is a guess about repo shape.
+- **Verdict:** sound
+- **Confidence:** medium
+
+### `parse()` returns raw strings by column position, and 06 will import it
+
+- **When:** `d08119c`, `check_scorecard.py` `parse`
+- **Slice:** 05
+- **What happens now:** `parse(text)` returns `meta` (a dict), `size` and `scores` (lists of dicts of strings), `trace` (hop lines), and `delta` (text). Columns are matched by position, so an extra cell is dropped and a `|` inside evidence silently cuts the evidence short (probe: still passes). It raises only when a marker is missing or repeated.
+- **The gap:** the spec says 06 reads the marked tables; the shape of that read is new.
+- **Reach:** 06 copies this shape; strings keep `not scored` and numbers in one column without conversion.
+- **Verdict:** sound. Simple and enough for a delta of areas and scores.
+- **Confidence:** medium
+
+## Next step
+
+The user answers the three "Check these first" entries, then the checker gets its strictness pass (skip counts and sample counts marked and checked, template and checker matched) before 06 starts reading `parse`.
