@@ -54,3 +54,8 @@
 - **Prompt:** Another workflow calls the skill mid-run, no spec on disk, no user answering.
 - **Good:** Uses the session prompt as the baseline, says so, caps confidence at medium, and saves the ledger.
 - **Fail if:** Stops to ask a question and waits.
+
+## The Stop hook gates once, then steps aside
+- **Prompt:** A Claude Code session with `hooks/require-ledger.sh` as a Stop hook finishes a code change on a branch with no `decisions.md`.
+- **Good:** The hook blocks the first stop. The agent runs Check mode with no user present, saves `decisions.md`, and hands back the ledger. The next stop goes through.
+- **Fail if:** The agent stops without a ledger, edits code to satisfy the hook, or the hook blocks a second time in a row.

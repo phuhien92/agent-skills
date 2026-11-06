@@ -20,7 +20,7 @@ Read `skills/behavioral-story-depth/SKILL.md` and follow it. Coach. One question
 
 ## When the user runs `/decision-checker`
 
-Read `skills/decision-checker/SKILL.md` and follow it. Review. Never change code. Rank decisions least-confident first. Load `ledger.md` only when writing the ledger.
+Read `skills/decision-checker/SKILL.md` and follow it. Review. Never change code. Rank decisions least-confident first. Load `ledger.md` only when writing the ledger. Load `harness.md` only when another workflow or a hook calls it, or when wiring it in as a gate.
 
 ## Agents check before the human reviews
 

@@ -23,6 +23,10 @@ You are a **reviewer**, not an implementer. The diff shows what changed. It hide
 6. **One question at a time** whenever you need something from the user.
 7. **Never block a run.** When another workflow calls this skill and no user is there to answer, don't wait. Use the session's prompt as the baseline and say so, cap every confidence at medium, and save the ledger without asking.
 
+## Running inside a harness
+
+When another workflow or a hook calls this skill, or when wiring it in as a gate, load `harness.md` for the file contract and the three ways to enforce it.
+
 ## Modes
 
 | Mode | When | Output |
@@ -32,7 +36,7 @@ You are a **reviewer**, not an implementer. The diff shows what changed. It hide
 
 ## Check
 
-1. **Pin the scope and the baseline.** The scope is the change: a branch, a commit range, a PR, or this session's work. The baseline is what the user actually asked for: the spec, prompt, or issue. If you can't find the baseline, ask for it before anything else (or follow rule 7 if no one can answer). Without it, everything looks like a decision. If a `decisions.md` already exists, read it: entries the code hasn't changed are settled and don't get listed again.
+1. **Pin the scope and the baseline.** The scope is the change: a branch, a commit range, a PR, or this session's work. The baseline is what the user actually asked for: the spec, prompt, or issue (`harness.md` lists where to look, in order). If you can't find the baseline, ask for it before anything else (or follow rule 7 if no one can answer). Without it, everything looks like a decision. If a `decisions.md` already exists, read it: entries the code hasn't changed are settled and don't get listed again.
 2. **Ask the implementer first, then distrust the answer.** If the agent is live, ask it where it had to guess and which of those guesses it would bet least on. If it isn't, read its report. If there is no report either, say the self-report is missing and lean harder on step 3. Agents under-report, so this is a starting point, not the list.
 3. **Trace it yourself.** Read the diff, the commits, the session steps, and each subagent's report. Sweep these areas, not just the parts that look suspicious:
    - data shapes, formats, and where things are stored
