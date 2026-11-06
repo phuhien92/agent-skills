@@ -65,6 +65,6 @@ Build order comes from **Depends on**. 01 and 04 can start in parallel; 02 and 0
 
 ## Next agent prompt
 
-Status: 01 approved (tie rule reworded); 04 built. 02 and 03 ran on brain-cli (outputs in `spikes/`), waiting for the user's checks. Separation check on keen-design-system scored all 4s (`spikes/03b-scores-keen.md`), so scoring moved to one scorer per area; a re-run with per-area scorers is in progress. Next: 05.
+Status: 01 approved (tie rule reworded); 04 built. 02 and 03 ran on brain-cli (outputs in `spikes/`), waiting for the user's checks. Per-area scorers on keen-design-system gave 4, 4, 3, 4, 3 where one scorer gave all 4s (`spikes/03c-per-area-keen.md`): the change separates areas. Modularity anchor now accepts folder layout when git history is flat. Waiting on the user's checks of 02 and 03; then 05.
 
 Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.

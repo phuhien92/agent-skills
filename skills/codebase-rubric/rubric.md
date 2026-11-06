@@ -28,7 +28,7 @@ Whether each file or module has one reason to change, and whether you can change
 
 - **1:** God files. One file owns many unrelated concerns, and most changes touch it. *Evidence:* a file in the hard size tier with several unrelated sections.
 - **3:** Most modules are focused, but one or two hubs collect everything new. *Evidence:* a file in the soft or hard tier that many others import.
-- **5:** Modules are small and focused, and a feature change touches a predictable, short list of files. *Evidence:* a recent feature whose files share one folder or prefix.
+- **5:** Modules are small and focused, and a feature change touches a predictable, short list of files. *Evidence:* a recent feature whose files share one folder or prefix. If the history is squashed or too short to show one, use the folder layout instead: each feature or concern has its own folder or prefix.
 
 ## Abstraction
 
