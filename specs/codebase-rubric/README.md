@@ -67,6 +67,6 @@ Build order comes from **Depends on**. 01 and 04 can start in parallel; 02 and 0
 
 ## Next agent prompt
 
-Status: 01 to 05 done, with both ledgers' fixes and the user's calls applied; 21 script tests pass. Next: 06 (delta), reading 05's tables through `check_scorecard.parse`.
+Status: 01 to 06 built; 29 script tests pass. 06 adds `scripts/delta.py` (score changes and tier moves; `--dir` finds the previous scorecard, sorting same-day `-N` suffixes by number). decision-checker on 06 next, then 07 (the skill, five parallel scorers, a real run on brain-cli as the success test).
 
 Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.
