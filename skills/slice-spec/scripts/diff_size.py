@@ -49,12 +49,17 @@ PINNED_CONFIG = {
     "diff.mnemonicPrefix": "false",
     "diff.relative": "false",
     "diff.suppressBlankEmpty": "false",
+    "diff.ignoreSubmodules": "none",
+    "diff.submodule": "short",
+    "core.attributesFile": "/dev/null",
 }
 DIFF_FLAGS = [
     "--color=always", "--color-moved=zebra", "--color-moved-ws=allow-indentation-change",
     "-M", "--no-ext-diff", "--no-textconv", "--src-prefix=a/", "--dst-prefix=b/",
-    "--unified=0",
+    "--unified=0", "--diff-algorithm=myers", "--submodule=short", "--text",
 ]
+# --text: a file a user's attributes mark -diff is still counted. Binary files are kept
+# out by the product-code filter before the diff runs, so --text never sees them there.
 SGR = re.compile(r"\x1b\[([0-9;]*)m")
 
 
@@ -157,6 +162,26 @@ def first_code(raw: str) -> str | None:
     return found.group(1) if found else None
 
 
+def header_paths(rest: str) -> tuple[str | None, str | None]:
+    """Paths from a `diff --git a/X b/Y` header, so a file with no ---/+++ lines (binary,
+    mode-only, empty) still has a name. Renames are named by their `rename` lines."""
+    if rest.startswith('"'):
+        end = 1
+        while end < len(rest) and (rest[end] != '"' or rest[end - 1] == "\\"):
+            end += 1
+        old, new = rest[:end + 1], rest[end + 2:]
+        return strip_prefix(old, "a/"), strip_prefix(new, "b/")
+    if (len(rest) - 5) % 2 == 0:
+        size = (len(rest) - 5) // 2
+        old, sep, new = rest[2:2 + size], rest[2 + size:5 + size], rest[5 + size:]
+        if rest.startswith("a/") and sep == " b/" and old == new:
+            return old, new
+    if ' "b/' in rest:
+        old, _, new = rest.partition(' "b/')
+        return strip_prefix(old, "a/"), strip_prefix('"b/' + new, "b/")
+    return None, None
+
+
 def parse(text: str) -> list[FileCount]:
     """Turn coloured `git diff` output (made with DIFF_FLAGS and PINNED_CONFIG) into counts.
 
@@ -170,7 +195,7 @@ def parse(text: str) -> list[FileCount]:
     for raw in text.split("\n"):
         plain = SGR.sub("", raw)
         if plain.startswith("diff --git "):
-            cur = FileCount(None, None)
+            cur = FileCount(*header_paths(plain[len("diff --git "):]))
             files.append(cur)
             in_hunk = False
             continue
@@ -187,6 +212,10 @@ def parse(text: str) -> list[FileCount]:
                 cur.old_path = unquote(plain[len("rename from "):])
             elif plain.startswith("rename to "):
                 cur.new_path = unquote(plain[len("rename to "):])
+            elif plain.startswith("new file mode"):
+                cur.old_path = None
+            elif plain.startswith("deleted file mode"):
+                cur.new_path = None
             continue
         if plain.startswith("@@"):
             continue
@@ -227,10 +256,11 @@ def count_range(repo: Path, base: str, head: str,
     """Per-file counts for `base..head` diffed at once, limited to pathspecs if given."""
     files = parse(diff_text(repo, base, head, pathspecs))
     for f in files:
-        renamed = f.old_path and f.new_path and f.old_path != f.new_path
-        if renamed and not (f.new or f.moved or f.deleted or f.moved_out):
-            # A pure rename: git prints no hunk, but every line moved.
-            f.moved = f.moved_out = line_count(repo, head, f.new_path)
+        if f.old_path and f.new_path and f.old_path != f.new_path:
+            # A rename: the lines it kept moved with it. Edited lines are already in the
+            # hunks; what the hunks don't show was carried over unchanged.
+            f.moved += line_count(repo, head, f.new_path) - f.new - f.moved
+            f.moved_out += line_count(repo, base, f.old_path) - f.deleted - f.moved_out
     return files
 
 
@@ -241,13 +271,17 @@ def count_commit(repo: Path, commit: str, pathspecs: list[str] | None = None) ->
 
 
 def commits_in(repo: Path, rev_range: str) -> list[str]:
-    """Commits of a range (`A..B`) oldest first, or the one commit named."""
+    """Commits of a range (`A..B`) oldest first, or the one commit named.
+
+    Follows first parents only: a merge's row already covers the side branch it brings
+    in (it is diffed against its first parent), so listing the side commits too would
+    count their lines twice."""
     if ".." in rev_range:
         base, _, head = rev_range.partition("..")
         if head.startswith("."):
             raise DiffSizeError(f"use A..B, not A...B: {rev_range}")
         resolve(repo, base or "HEAD")
         resolve(repo, head or "HEAD")
-        out = git(repo, "rev-list", "--reverse", rev_range)
+        out = git(repo, "rev-list", "--reverse", "--first-parent", rev_range)
         return out.split()
     return [resolve(repo, rev_range)]

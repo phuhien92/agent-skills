@@ -119,3 +119,132 @@ Fix the PR-range label and the reversed rows-vs-range reason in `pr27.md` and sl
 
 - **Whitespace setting:** always `--color-moved-ws=allow-indentation-change`; the small remaining undercount (short moved lines below git's block-size floor) is labelled in the output. Approved by the user after reading `spikes/pr27.md`.
 - **Tiers locked:** target 400, soft 800, hard 1,500 new product-code lines, for each commit and for the PR total. Approved by the user; no longer provisional.
+
+# Check 2: slice 02 move classifier
+
+- **Scope:** commit `c0d7eef` on `claude/diff-size` (`skills/slice-spec/scripts/diff_size.py`, `test_diff_size.py`, the README's next-agent prompt).
+- **Baseline:** `specs/diff-size/README.md`, `slices/02-move-classifier.md`, and the user's slice 01 gate decisions above. Run by another workflow with no user present (rule 7): every confidence is capped at medium. Check 1 entries the code did not change are not relisted.
+- **Self-report:** missing beyond the commit message and the README prompt, so this ledger rests on an independent trace and throwaway probes in temp repos outside this repo.
+- **Tests:** `python3 -m unittest discover -s skills/slice-spec/scripts` passes (17 tests). `python3 tools/validate.py` passes (7 skills, 0 errors). `skills/codebase-rubric/scripts` tests pass.
+
+## Reproduction on brain-cli
+
+With pathspecs `. :!dist :!specs` and an empty user config, the classifier gives exactly the spike's indent-insensitive numbers for every slice commit (`ea9b3ed` 111 / 76, `9083e81` 42 / 273, `adf8ed2` 34 / 205, `138fb64` 171 / 469, `fc3f4a6` 78 / 248, `596eacd` 5 / 130, `f6f554a` 6 / 7 new / moved), and deleted plus moved-out equals the spike's deleted column in each (for `138fb64`: 63 + 469 = 532). The range `7045e68..f6f554a` gives 538 new / 1,254 moved / 154 deleted / 1,253 moved out (154 + 1,253 = 1,407). The README's `dist/` claim also reproduces (`ea9b3ed` 110 vs 111, the range 536 vs 538). Over the whole brain-cli history diffed against the empty tree, new + moved equals `--numstat` added (20,086).
+
+## Check these first
+
+1. A user's diff config still changes the counts.
+2. Some files come back with an empty path.
+3. A renamed binary file counts its newline bytes as moved lines.
+
+## Needs you
+
+### A rename with one edited line drops every moved line
+
+- **When:** `c0d7eef`, `count_range()`: the line-count fill-in runs only when a renamed file has no hunk.
+- **Slice:** 02
+- **What happens now:** a 40-line file renamed with no changes counts 0 new / 40 moved. The same file renamed with one line changed counts 1 new / 0 moved / 1 deleted, because git prints a hunk for the one line and the 39 unchanged lines appear nowhere. So the moved column jumps from 40 to 0 on a one-line edit. The tiered "new" number is right either way (1). The obvious alternative counts a renamed file's unchanged lines as moved in both cases: its line count in the commit minus its added lines.
+- **The gap:** the README says "renames counted as moved", and Check 1 recommended adding a renamed file's line count to the moved column, but neither said what happens when the rename also has edits.
+- **Reach:** slice 04's table and the PR total will under-report moves for any directory rename that also touches imports, which is the common case.
+- **Verdict:** needs-you. Only a reported column changes, so it is a reporting call. **Recommended call:** a renamed file's lines that are not in an added hunk count as moved (and as moved out), with or without edits, plus a temp-repo test. **To reverse:** fill in the count only for renames with no hunk, as now.
+- **Confidence:** medium.
+
+### "Deleted" and rename handling follow Check 1's recommendations without a user answer
+
+- **When:** `c0d7eef`, `FileCount` (`deleted` vs `moved_out`) and the pure-rename fill-in.
+- **Slice:** 02
+- **What happens now:** a removed line that git colours as moved is now `moved_out`, not `deleted`, so `138fb64` reports 63 deleted instead of 532. A pure rename counts every line as moved instead of 0. Both are the recommended calls from Check 1's two needs-you entries. The user's gate notes record only the whitespace setting and the tiers, so the user never answered these two. The README prompt told slice 02 to "settle" them, and the worker took the recommendations.
+- **The gap:** Check 1 left both as needs-you. The gate did not close them.
+- **Reach:** slice 04's table columns and the output note follow these definitions.
+- **Verdict:** needs-you. The calls are sound and easy to reverse, but they are still the user's to confirm. **Recommended call:** keep both and say in 04's output note that deleted means removed and not moved. **To reverse:** add `moved_out` back into `deleted`, and drop the rename fill-in.
+- **Confidence:** medium.
+
+### A range of commits sizes a merge and the side-branch commits it brings in
+
+- **When:** `c0d7eef`, `commits_in()` (`git rev-list --reverse A..B`, no `--first-parent`).
+- **Slice:** 02
+- **What happens now:** a branch merges a side branch that added a 5-line file. `commits_in` returns the side commit and the merge. The side commit counts 5 new, and the merge (against its first parent) counts the same 5 again, so the rows add up to 11 new while the range diffed at once counts 6. The merge row can cross a tier on lines that were already sized in their own row. The obvious alternative walks `--first-parent`, so each line lands in one row. The PR total is unaffected, because it diffs the range at once.
+- **The gap:** slice 02 asked for one commit. `commits_in` is a range helper for 04, added without a spec line on merges in a range.
+- **Reach:** slice 04's per-commit table copies this walk.
+- **Verdict:** needs-you. Which commits a PR's table should list is a reporting call for 04. **Recommended call:** `--first-parent` in `commits_in`, decided in 04's spec. **To reverse:** drop the flag.
+- **Confidence:** medium.
+
+## Unsound
+
+### A user's diff config still changes the counts
+
+- **When:** `c0d7eef`, `PINNED_CONFIG` and `DIFF_FLAGS`; the module docstring says a user's config "cannot change the counts".
+- **Slice:** 02
+- **What happens now:** colours, prefixes and move settings are pinned, but other settings that change what the diff contains are not. With `diff.algorithm=histogram` in the user's global config, brain-cli `138fb64` counts 166 new / 479 moved (not 171 / 469) and `fc3f4a6` 80 new (not 78). With `diff.submodule=diff`, a submodule bump that counted 1 new / 1 deleted instead counts the submodule's own changed file as 4 new lines. With `diff.ignoreSubmodules=all` or `diff.submodule=log` it counts nothing. With `core.attributesFile` marking `*.py -diff`, a 5-line addition counts 0. The obvious alternative sets these on the command line (the diff algorithm the spike used, the submodule format, the submodule ignore rule) and neutralises the user's attributes file, then tests each key. The existing config test covers colours, prefixes and `diff.colorMoved` only.
+- **The gap:** the README's planning decision was "pinned colours" so "a user's git colour config must not change the counts". The worker widened the claim in the docstring without covering the wider set.
+- **Reach:** two people sizing the same commit can get different tiers. Slice 04's "reproduce the spike" check passes only for users on git's default algorithm.
+- **Verdict:** unsound. The stated property does not hold. **Redo from:** every user setting that changes the diff's lines or files (algorithm, submodule format and ignore rule, attributes file) is fixed by the script, and a test sets each one and expects the same counts.
+- **Confidence:** low.
+
+### Some files come back with an empty path
+
+- **When:** `c0d7eef`, `parse()`: paths are read only from `---`/`+++` and `rename from`/`rename to` lines.
+- **Slice:** 02
+- **What happens now:** git prints no `---`/`+++` lines for an added binary file, a mode-only change (`chmod +x`), an empty new file, or a file whose attributes say `-diff`. Each comes back as a `FileCount` with both paths `None`, so `.path` is `""`. Counts are 0, so totals are right, but slice 03 judges files by path and slice 04 prints them by path, and both will see `""`. The obvious alternative takes the paths from the `diff --git a/… b/…` header (or the `new file`, `deleted file` and rename lines) whenever `---`/`+++` are missing.
+- **The gap:** the parsing was delegated to the worker; no test has a file without a hunk except the pure rename.
+- **Reach:** 03's filter and 04's table both key on path.
+- **Verdict:** unsound. A record that names no file is not a per-file count. **Redo from:** every `FileCount` names the file it counts, whether or not git printed a hunk for it.
+- **Confidence:** low.
+
+### A renamed binary file counts its newline bytes as moved lines
+
+- **When:** `c0d7eef`, `count_range()` and `line_count()`.
+- **Slice:** 02
+- **What happens now:** a binary file is renamed. git prints `Binary files … differ` and no hunk, so the pure-rename fill-in runs and counts the newline bytes in the blob: 50 moved and 50 moved out for a 70-byte file. Renamed with its bytes changed, it counts 51 / 51. An added binary file counts 0, as it should. The obvious alternative treats a file git calls binary as having no lines.
+- **The gap:** binary files were not in slice 02's cases, and slice 03 skips them only later, from the tree.
+- **Reach:** small for the tiered number (moved is not tiered), but the moved column for a PR that renames an assets folder becomes noise, and 03's filter only hides it if it gets binary detection right.
+- **Verdict:** unsound. Line counts on a binary blob have no meaning. **Redo from:** a file git reports as binary contributes zero line counts in every column, with its path kept.
+- **Confidence:** low.
+
+### The git version and repo checks exist but nothing runs them
+
+- **When:** `c0d7eef`, `check_git()` and `check_repo()`.
+- **Slice:** 02
+- **What happens now:** slice 02's Decided list says git older than 2.17 exits 2 naming the version. `check_git()` does that, but no code path calls it and no test covers it, so on old git the user would see git's own "unknown option" error. `count_commit()` also skips `check_repo()`, so a path that is not a repo reports "unknown commit: …" instead of "not a git repository". The obvious alternative runs both checks at the entry points, or hands both to slice 04 in the README prompt.
+- **The gap:** there is no CLI yet, so "exit 2" has no home in 02. The README prompt does not say that 04 must wire the checks in.
+- **Reach:** 04 may assume the checks are already in force.
+- **Verdict:** unsound. A decided behaviour is untested and unreachable, and the hand-off doesn't mention it. **Redo from:** the bad-input checks run before any count, and a test proves each one, or the next-agent prompt names them as 04's job.
+- **Confidence:** medium.
+
+## Sound
+
+### Counts come back as a list of per-file records with four columns and both paths
+
+- **When:** `c0d7eef`, `FileCount` and `count_commit()`.
+- **Slice:** 02
+- **What happens now:** the slice named the result `{path: (new, moved, deleted)}`. The build returns a list of `FileCount` records with `new`, `moved`, `deleted`, `moved_out`, `old_path` and `new_path`. The fourth column is needed for the moved-out split, and both paths let 03 judge a rename by either side. The alternative, a dict keyed by path, can't hold a rename's two paths.
+- **The gap:** the seam's shape predates the moved-out split.
+- **Reach:** 03 and 04 build on this record.
+- **Verdict:** sound. It is the slice's shape plus what the later calls needed.
+- **Confidence:** medium.
+
+### Diffs use zero context lines and only hunk lines are counted
+
+- **When:** `c0d7eef`, `--unified=0` in `DIFF_FLAGS` and `parse()`'s hunk tracking.
+- **Slice:** 02
+- **What happens now:** the diff carries no context lines, and `+`/`-` lines count only after a file's first `@@`, which fixes Check 1's header-by-prefix entry (a removed `-- comment` line is counted). `\ No newline at end of file` lines are ignored, and a moved block whose last line lacked a newline still counts as moved. All brain-cli numbers match the spike, which used git's default context, so zero context does not change move detection here.
+- **The gap:** the flags were delegated to the worker.
+- **Reach:** later slices inherit the parser.
+- **Verdict:** sound. It reproduces and closes the earlier gap.
+- **Confidence:** medium.
+
+### The README prompt tells slice 03 to filter with pathspecs
+
+- **When:** `c0d7eef`, `README.md` "Next agent prompt".
+- **Slice:** 02
+- **What happens now:** the prompt says moves are matched only among the files diffed, so 03 must pass its filter to git as pathspecs. Its evidence reproduces: `ea9b3ed` counts 110 new `src/` lines with `dist/` in the diff and 111 without, and the range 536 vs 538. The alternative, filtering counts after the diff, would let compiled output supply moves.
+- **The gap:** none. The README asks for the prompt to be updated.
+- **Reach:** sets 03's design.
+- **Verdict:** sound.
+- **Confidence:** medium.
+
+Trivial calls folded: path unquoting, the header-tab strip, refusing `A...B`, the empty-tree constant, and the test fixture layout (5, delegated to the worker or harmless). Relative repo paths, CRLF files, whitespace-error highlighting, a 20,000-line re-indented move and `diff.renames`, `diff.renameLimit`, `diff.indentHeuristic`, `diff.interHunkContext` and `core.whitespace` all probed with no miscount.
+
+## Next step
+
+Fix the three unsound parsing and config entries in `diff_size.py` with a temp-repo test each, then put the three needs-you calls in front of the user before slice 03 starts. Four of the ten entries sit in what the diff contains before parsing (config, binaries, files with no hunk, renames with edits). Settle "which git settings and file kinds the counts must survive" in 03's spec instead of finding them one by one.

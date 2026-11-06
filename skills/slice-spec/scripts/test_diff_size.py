@@ -137,6 +137,42 @@ class ClassifierTest(unittest.TestCase):
         self.assertEqual(totals(files), (0, 9, 0, 9))
         self.assertEqual((files[0].old_path, files[0].new_path), ("old/name.py", "new/name.py"))
 
+    def test_rename_with_an_edit_keeps_its_unchanged_lines_as_moved(self):
+        self.repo.write("old/name.py", lines(OTHER, BLOCK))
+        self.repo.commit()
+        (self.repo.root / "new").mkdir()
+        self.repo.run("mv", "old/name.py", "new/name.py")
+        self.repo.write("new/name.py", lines(OTHER, BLOCK, ["x = compute_new_value(1)"]))
+        self.assertEqual(self.count(self.repo.commit()), (1, 9, 0, 9))
+
+    def test_files_without_hunk_headers_keep_their_paths(self):
+        self.repo.write("tool.sh", lines(["echo building the release artefacts now"]))
+        self.repo.commit()
+        os.chmod(self.repo.root / "tool.sh", 0o755)
+        self.repo.write("empty.py", "")
+        self.repo.write("blob.bin", "\0\1\2")
+        files = d.count_commit(self.repo.root, self.repo.commit())
+        self.assertEqual(sorted(f.path for f in files), ["blob.bin", "empty.py", "tool.sh"])
+        empty = [f for f in files if f.path == "empty.py"][0]
+        self.assertEqual((empty.old_path, empty.new_path), (None, "empty.py"))
+
+    def test_user_diff_settings_cannot_change_counts(self):
+        self.repo.write("a.py", lines(OTHER, BLOCK))
+        self.repo.write("b.py", lines(["# helpers for invoices and statements"]))
+        self.repo.commit()
+        self.repo.write("a.py", lines(OTHER))
+        self.repo.write("b.py", lines(["# helpers for invoices and statements"], BLOCK, ["x = compute_new_value(1)"]))
+        commit = self.repo.commit()
+        before = self.count(commit)
+        attrs = self.repo.root.parent / (self.repo.root.name + "-attrs")
+        attrs.write_text("*.py -diff\n")
+        self.addCleanup(attrs.unlink)
+        for key, value in [("diff.algorithm", "histogram"), ("diff.ignoreSubmodules", "all"),
+                           ("diff.submodule", "diff"), ("core.attributesFile", str(attrs))]:
+            self.repo.run("config", key, value)
+        self.assertEqual(self.count(commit), before)
+        self.assertEqual(before, (1, 5, 0, 5))
+
     def test_user_colour_and_prefix_config_cannot_change_counts(self):
         self.repo.write("a.py", lines(OTHER, BLOCK))
         self.repo.write("b.py", lines(["# helpers for invoices and statements"]))
@@ -189,6 +225,18 @@ class ClassifierTest(unittest.TestCase):
         self.repo.write(name, lines(BLOCK))
         files = d.count_commit(self.repo.root, self.repo.commit())
         self.assertEqual([f.path for f in files], [name])
+
+    def test_a_range_follows_first_parents_so_merged_lines_count_once(self):
+        start = self.repo.commit("start")
+        self.repo.run("checkout", "-q", "-b", "side")
+        self.repo.write("b.py", lines(BLOCK))
+        side = self.repo.commit("side")
+        self.repo.run("checkout", "-q", "main")
+        self.repo.run("merge", "-q", "--no-ff", "-m", "merge side", "side")
+        merge = self.repo.run("rev-parse", "HEAD").strip()
+        rows = d.commits_in(self.repo.root, f"{start}..{merge}")
+        self.assertEqual(rows, [merge])
+        self.assertNotIn(side, rows)
 
     def test_commits_in_a_range_are_oldest_first(self):
         first = self.repo.commit("one")
