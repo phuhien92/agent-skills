@@ -3,12 +3,10 @@ name: radio-system-design-practice
 description: >-
   Coach frontend (and fullstack) system design interviews with the RADIO
   framework: one question at a time, score the answer, lock decisions, then
-  continue. Use when the user wants to practice system design, walk through
-  RADIO, design a news feed / autocomplete / Pinterest / docs / chat UI, asks
-  to be grilled on a solution.md or Excalidraw board, or says "practice this
-  design" / "walk me through each step" / "ask me one question at a time" /
-  /radio-system-design-practice, for any system-design prompt, not only
-  news feed.
+  continue. Use when the user wants to practice any system design prompt
+  (news feed, autocomplete, Pinterest, docs, chat UI), asks to be grilled on
+  a solution.md or Excalidraw board, says "practice this design" or "ask me
+  one question at a time", or runs /radio-system-design-practice.
 ---
 
 # RADIO system design practice
