@@ -67,6 +67,6 @@ Build order comes from **Depends on**. 01 and 04 can start in parallel; 02 and 0
 
 ## Next agent prompt
 
-Status: 01 to 06 built; 29 script tests pass. 06 adds `scripts/delta.py` (score changes and tier moves; `--dir` finds the previous scorecard, sorting same-day `-N` suffixes by number). decision-checker on 06 next, then 07 (the skill, five parallel scorers, a real run on brain-cli as the success test).
+Status: 01 to 07 built; 31 script tests pass. 07 ran on brain-cli at `7045e68` exactly as SKILL.md says: five independent scorers in parallel, then the template, delta, and `check_scorecard.py --repo` (prints `ok`). Scores 4, 3, 3, 3, 4; copy in `spikes/07-brain-cli-scorecard.md`. Waiting on the user's spot check of three scores (the success test). Then 08 (wiring, evals, CI) turns `validate.py` green.
 
 Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.
