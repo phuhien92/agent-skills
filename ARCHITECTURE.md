@@ -113,6 +113,14 @@ CI: `.github/workflows/validate.yml` runs the validator and the `codebase-rubric
 
 Newest first. Each entry says what we decided, why, what we turned down, where it can fail, and when to revisit it.
 
+### 2026-11-06: Measure the skills from their own output first
+
+- **Decision:** `tools/skill_metrics.py` reads specs, `decisions.md` ledgers, `scorecards/`, and a hand-kept `skill-outcomes.md`, and reports per-skill numbers: reslices, verdicts per slice, score change, scoring noise, and overruled, escaped, and confirmed calls. Read only, standard library only, tested in CI.
+- **Why:** whether a skill was *right* lives in the files it writes and in what the user later finds out, not in session traces. Local files keep the user's code off third-party services.
+- **Turned down for now:** PostHog LLM Analytics. Useful for cost, duration, and failures per run, but its traces carry prompts and code, so it needs the user's approval and a metadata-only setup. Revisit if cost or reliability becomes the open question.
+- **Where it can fail:** outcomes are only as complete as the log; "escaped" problems are the ones nobody notices. Scoring noise needs two runs on the same commit, which nobody does by accident.
+- **Revisit when:** the first real end-to-end run has produced a month of data.
+
 ### 2026-11-06: `codebase-rubric` is the Verify block
 
 - **Decision:** a periodic health check that writes `scorecards/<date>.md`: a size table (500, 800, 1,000 lines), five areas scored 1-5 by five independent scorers with `path:line` evidence, one failure traced end to end, and the change since the last scorecard. Three standard-library scripts own the mechanics (`size_report.py`, `check_scorecard.py --repo`, `delta.py`); agents own the judgment. Built from the spec in `specs/codebase-rubric/`, the first spec written by `slice-spec`.
