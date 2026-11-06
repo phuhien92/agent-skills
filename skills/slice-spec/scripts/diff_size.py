@@ -12,12 +12,23 @@ alphanumeric characters, so short moved lines (a lone "}" or a one-word import) 
 as new. Moves are found inside one diff, so a block moved across two commits counts
 as deleted in one and new in the other.
 
+Usage: diff_size.py <repo> <range> [--json]
+
+<range> is A..B (the commits after A up to B, first parents only) or one commit.
+Prints one row per commit, oldest first, then the whole range diffed at once, with a
+tier for each: target 400, soft 800, hard 1500 new lines. Over soft, a commit gets
+"consider Reslice" and the range gets "split the goal"; over hard, a commit gets
+"reslice before review". These are warnings: the exit code is 0 whatever the size,
+and 2 only on bad input (not a repo, unknown commit, git too old).
+
 Standard library only. Needs git 2.17 or later.
 """
 from __future__ import annotations
 
+import json
 import os
 import re
+import sys
 import subprocess
 import tempfile
 from pathlib import PurePosixPath
@@ -563,3 +574,115 @@ def count_product(repo: Path, base: str, head: str) -> tuple[list[FileCount], Fi
         head_tree = pruned_tree(repo, head, filtered.drop_new, env)
         files = count_range(repo, base_tree, head_tree, env=env)
     return files, filtered
+
+
+# --- Report and CLI (slice 04) ------------------------------------------------------
+
+DIFF_TARGET, DIFF_SOFT, DIFF_HARD = 400, 800, 1500
+DIFF_LABEL = {"target": f"over target ({DIFF_TARGET})", "soft": f"over soft ({DIFF_SOFT})",
+              "hard": f"over hard ({DIFF_HARD})"}
+NOTES = [
+    "Product code only, with codebase-rubric's skip rules.",
+    "Moved lines ignore indentation changes. A moved line shorter than git's block floor "
+    "(20 letters and digits) counts as new, so new leans high.",
+    "The commit rows find moves inside each commit; the whole-range row finds moves across "
+    "the range, so its new count can be lower than the rows' sum.",
+]
+
+
+def diff_tier(new: int) -> str | None:
+    if new > DIFF_HARD:
+        return "hard"
+    if new > DIFF_SOFT:
+        return "soft"
+    if new > DIFF_TARGET:
+        return "target"
+    return None
+
+
+def summarise(files: list[FileCount], filtered: Filtered) -> dict:
+    new = sum(f.new for f in files)
+    return {"new": new, "moved": sum(f.moved for f in files),
+            "deleted": sum(f.deleted for f in files), "moved_out": sum(f.moved_out for f in files),
+            "tier": diff_tier(new), "skipped": dict(sorted(filtered.skipped.items())),
+            "attrs_from_worktree": filtered.attrs_from_worktree}
+
+
+def subject(repo: Path, commit: str) -> str:
+    return git(repo, "log", "-1", "--format=%s", commit).strip()
+
+
+def report(repo: Path, rev_range: str) -> dict:
+    check_git()
+    check_repo(repo)
+    repo = toplevel(repo)
+    commits = commits_in(repo, rev_range)
+    rows = []
+    for sha in commits:
+        files, filtered = count_product(repo, parent(repo, sha), sha)
+        rows.append({"commit": sha[:7], "subject": subject(repo, sha), **summarise(files, filtered)})
+    total = None
+    if ".." in rev_range:
+        base, _, head = rev_range.partition("..")
+        files, filtered = count_product(repo, resolve(repo, base or "HEAD"), resolve(repo, head or "HEAD"))
+        total = summarise(files, filtered)
+    return {"range": rev_range,
+            "tiers": {"target": DIFF_TARGET, "soft": DIFF_SOFT, "hard": DIFF_HARD},
+            "commits": rows, "total": total, "notes": NOTES}
+
+
+def warnings(data: dict) -> list[str]:
+    out = []
+    for row in data["commits"]:
+        if row["tier"] == "soft":
+            out.append(f"`{row['commit']}` is {DIFF_LABEL['soft']}: consider Reslice.")
+        elif row["tier"] == "hard":
+            out.append(f"`{row['commit']}` is {DIFF_LABEL['hard']}: reslice before review.")
+    total = data["total"]
+    if total and total["tier"] in ("soft", "hard"):
+        out.append(f"The whole range is {DIFF_LABEL[total['tier']]}: split the goal.")
+    if any(r["attrs_from_worktree"] for r in data["commits"]) or (total and total["attrs_from_worktree"]):
+        out.append("linguist attributes were read from the working tree (git older than 2.40).")
+    return out
+
+
+def cell(text: str) -> str:
+    return text.replace("|", "\\|")
+
+
+def as_text(data: dict) -> str:
+    out = [f"Change size for `{cell(data['range'])}`", "",
+           "| Commit | Subject | New | Moved | Deleted | Tier |", "|---|---|---|---|---|---|"]
+    for r in data["commits"]:
+        tier = DIFF_LABEL[r["tier"]] if r["tier"] else ""
+        out.append(f"| `{r['commit']}` | {cell(r['subject'])} | {r['new']} | {r['moved']} | {r['deleted']} | {tier} |")
+    total = data["total"]
+    if total:
+        tier = DIFF_LABEL[total["tier"]] if total["tier"] else ""
+        out.append(f"| **Whole range** | diffed at once | **{total['new']}** | {total['moved']} | "
+                   f"{total['deleted']} | {tier} |")
+    skipped = (total or (data["commits"][0] if data["commits"] else {"skipped": {}}))["skipped"]
+    out += ["", "Skipped files: " + (", ".join(f"{SKIP_LABELS[k]}: {v}" for k, v in skipped.items()) or "none")]
+    warn = warnings(data)
+    if warn:
+        out += ["", "Warnings:"] + [f"- {w}" for w in warn]
+    out += [""] + [f"- {n}" for n in data["notes"]]
+    return "\n".join(out)
+
+
+def main(argv: list[str]) -> int:
+    args = [a for a in argv if a != "--json"]
+    if len(args) != 2 or any(a.startswith("-") for a in args):
+        print("usage: diff_size.py <repo> <range> [--json]", file=sys.stderr)
+        return 2
+    try:
+        data = report(Path(args[0]), args[1])
+    except DiffSizeError as err:
+        print(f"diff_size: {err}", file=sys.stderr)
+        return 2
+    print(json.dumps(data, indent=2) if "--json" in argv else as_text(data))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
