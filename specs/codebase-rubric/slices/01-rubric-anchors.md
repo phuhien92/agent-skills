@@ -6,7 +6,7 @@
 
 **Check:** artifact `rubric.md`. The user approves it or returns edits. Fails if any area lacks a 1, 3, or 5 anchor, or an anchor names no kind of evidence (such as "a file:line where X", "a module whose imports show Y").
 
-**Must stay green:** `python3 tools/validate.py`, except the one expected "skills/codebase-rubric/ has no SKILL.md" error until 07 adds it. (Corrected during build: the validator treats every folder under `skills/` as a skill.)
+**Must stay green:** `python3 tools/validate.py`.
 
 **Decided:**
 - Anchors only at 1, 3, 5; scores 2 and 4 mean "between." Fewer anchors, less to argue about.

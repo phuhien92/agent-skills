@@ -40,7 +40,12 @@ class SizeReportTest(unittest.TestCase):
             p.parent.mkdir(parents=True, exist_ok=True)
             p.write_text(text)
         (self.repo / "logo.png").write_bytes(b"\x89PNG\r\n\x1a\n\0\0" + b"\n" * 2000)
-        (self.repo / ".gitattributes").write_text("gen/** linguist-generated\n")
+        (self.repo / ".gitattributes").write_text("gen/** linguist-generated\ngen/keep.ts -linguist-generated\n")
+        (self.repo / "gen/keep.ts").write_text(lines(700))
+        (self.repo / "nested").mkdir()
+        (self.repo / "nested/.gitattributes").write_text("*.ts linguist-vendored\n")
+        (self.repo / "nested/lib.ts").write_text(lines(900))
+        (self.repo / "link.py").symlink_to("b501.py")
         subprocess.run(["git", "init", "-q", str(self.repo)], check=True)
         subprocess.run(["git", "-C", str(self.repo), "add", "-A", "-f"], check=True)
 
@@ -55,6 +60,7 @@ class SizeReportTest(unittest.TestCase):
             "e1000.py": (1000, "soft"),
             "c801.ts": (801, "soft"),
             "f800.py": (800, "target"),
+            "gen/keep.ts": (700, "target"),
             "b501.py": (501, "target"),
         })
         self.assertEqual([r["path"] for r in data["files"]][0], "src/d1001.go")
@@ -65,7 +71,8 @@ class SizeReportTest(unittest.TestCase):
             "binary": 1,
             "generated header": 1,
             "lockfile": 1,
-            "marked generated or vendored": 1,
+            "marked generated or vendored": 2,
+            "symlink or not a file": 1,
             "vendored or build folder": 2,
         })
 

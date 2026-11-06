@@ -12,7 +12,6 @@ Standard library only. Exits 2 with a reason if <repo> is not a directory.
 """
 from __future__ import annotations
 
-import fnmatch
 import json
 import os
 import subprocess
@@ -62,42 +61,38 @@ def list_files(repo: Path) -> list[str]:
         return sorted(found)
 
 
-def gitattr_patterns(repo: Path) -> list[str]:
-    """Patterns marked linguist-generated or linguist-vendored in the root .gitattributes."""
-    path = repo / ".gitattributes"
-    if not path.is_file():
-        return []
-    patterns = []
-    for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
-        parts = raw.split()
-        if len(parts) < 2 or parts[0].startswith("#"):
-            continue
-        attrs = parts[1:]
-        if any(a in ("linguist-generated", "linguist-generated=true",
-                     "linguist-vendored", "linguist-vendored=true") for a in attrs):
-            patterns.append(parts[0])
-    return patterns
+def marked_paths(repo: Path, paths: list[str]) -> set[str]:
+    """Paths git reports as linguist-generated or linguist-vendored.
+
+    Asks git itself (`git check-attr`), so nested .gitattributes files, negations,
+    and git's own pattern rules all apply. Outside git, nothing is marked.
+    """
+    if not paths:
+        return set()
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(repo), "check-attr", "-z", "--stdin",
+             "linguist-generated", "linguist-vendored"],
+            input="\0".join(paths).encode("utf-8", "surrogateescape"),
+            capture_output=True, check=True,
+        ).stdout.decode("utf-8", "surrogateescape").split("\0")
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return set()
+    marked = set()
+    for i in range(0, len(out) - 2, 3):
+        path, _attr, value = out[i:i + 3]
+        if value in ("set", "true"):
+            marked.add(path)
+    return marked
 
 
-def matches_gitattr(rel: str, patterns: list[str]) -> bool:
-    for pat in patterns:
-        p = pat.lstrip("/")
-        if p.endswith("/"):
-            p += "**"
-        if fnmatch.fnmatch(rel, p) or ("/" not in p and fnmatch.fnmatch(Path(rel).name, p)):
-            return True
-        if p.endswith("/**") and rel.startswith(p[:-3] + "/"):
-            return True
-    return False
-
-
-def skip_reason(rel: str, head: bytes, patterns: list[str]) -> str | None:
+def skip_reason(rel: str, head: bytes, marked: set[str]) -> str | None:
     parts = Path(rel).parts
     if Path(rel).name in LOCKFILES:
         return "lockfile"
     if any(p in SKIP_DIRS for p in parts[:-1]):
         return "vendored or build folder"
-    if matches_gitattr(rel, patterns):
+    if rel in marked:
         return "marked generated or vendored"
     if b"\0" in head:
         return "binary"
@@ -108,15 +103,17 @@ def skip_reason(rel: str, head: bytes, patterns: list[str]) -> str | None:
 
 
 def report(repo: Path) -> dict:
-    patterns = gitattr_patterns(repo)
+    paths = list_files(repo)
+    marked = marked_paths(repo, paths)
     rows, skipped = [], {}
-    for rel in list_files(repo):
+    for rel in paths:
         path = repo / rel
-        if not path.is_file() or path.is_symlink():
+        if path.is_symlink() or not path.is_file():
+            skipped["symlink or not a file"] = skipped.get("symlink or not a file", 0) + 1
             continue
         with path.open("rb") as fh:
             head = fh.read(SNIFF_BYTES)
-            reason = skip_reason(rel, head, patterns)
+            reason = skip_reason(rel, head, marked)
             if reason:
                 skipped[reason] = skipped.get(reason, 0) + 1
                 continue

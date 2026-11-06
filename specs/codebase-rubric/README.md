@@ -56,10 +56,11 @@ Build order comes from **Depends on**. 01 and 04 can start in parallel; 02 and 0
 - **CI runs the script tests** (08), not just `validate.py`, so the tests can't silently rot. From the seams draft.
 - **Lines are raw newline counts** of all lines. Skips: lockfiles, `vendor/`, `node_modules/`, `dist/`, `build/`, files marked `linguist-generated` or `linguist-vendored` in `.gitattributes`, files with a generated-code header, and binary files. The scorecard lists skip counts so misses are visible.
 - Drafts were independent: three subagents with lean, fail-fast, and seams lenses.
+- **`rubric.md` approved as written** by the user (2026-11-06), including its "How to score" rules (evidence before score; on a tie, take the lower score and say what would earn the higher). Those rules count as settled for 07.
 - **Target repo: [phuhien92/brain-cli](https://github.com/phuhien92/brain-cli) at `7045e68`** (user's choice). It has three source files over 500 lines (`src/cli.ts` 1,692, `test/extensions.test.ts` 997, `src/extensions.ts` 540) and two files the skip rules must catch (`dist/src/cli.js` 1,579, a PNG under `assets/`). The session clone is read-only, so scorecards stay local.
 
 ## Next agent prompt
 
-Status: 01 drafted, waiting for the user's approval. 04 built: 5 fixture tests pass, and on brain-cli it lists exactly `src/cli.ts`, `test/extensions.test.ts`, and `src/extensions.ts`, skipping `dist/` and the PNG. `validate.py` shows one expected error (no SKILL.md) until 07. Next: user approves 01, then 02 and 03 in parallel.
+Status: 01 approved. 04 built and revised after the first decisions ledger (git decides attributes, symlinks counted). Open: four skip-rule and validator calls for the user in `decisions.md`; settle them before 05. Next: 02 and 03 in parallel on brain-cli.
 
 Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.

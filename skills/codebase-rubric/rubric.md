@@ -2,7 +2,7 @@
 
 Loaded by `codebase-rubric` when scoring. Five areas, each scored 1 to 5. Only 1, 3, and 5 are defined; a 2 or a 4 means the evidence sits between two anchors. Every score needs at least one `path:line` that a person can open and see the reason in under a minute.
 
-The five areas and the size tiers (target 500, soft 800, hard 1,000 lines) come from a rubric shared on X; source link pending.
+The five areas and the size tiers (target 500, soft 800, hard 1,000 lines) come from a screenshot the user shared; its source is not yet known.
 
 ## How to score
 
