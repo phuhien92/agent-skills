@@ -88,6 +88,55 @@ class DeltaTest(unittest.TestCase):
             with self.assertRaises(ContractError):
                 delta.previous_in(folder, folder / "notes.md")
 
+    def test_broken_newest_is_skipped(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            folder = Path(d)
+            (folder / "2026-10-01.md").write_text(PREV)
+            (folder / "2026-11-01.md").write_text(PREV.replace("<!-- scores:end -->", ""))
+            (folder / "2026-11-06.md").write_text(CUR)
+            prev, skipped = delta.pick_previous(folder, folder / "2026-11-06.md")
+            self.assertEqual(prev.name, "2026-10-01.md")
+            self.assertEqual(len(skipped), 1)
+            self.assertTrue(skipped[0].startswith("2026-11-01.md: "))
+            out = delta.delta(prev.read_text(), CUR, skipped)
+            self.assertIn("Skipped newer scorecards that aren't valid:", out)
+            self.assertIn("- 2026-11-01.md: ", out)
+            self.assertIn("- Abstraction: 3 → 4", out)
+
+    def test_all_earlier_broken_is_not_compared(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            folder = Path(d)
+            (folder / "2026-11-01.md").write_text(PREV.replace("| Architecture | 4 |", "| Architecture | 9 |"))
+            prev, skipped = delta.pick_previous(folder, folder / "2026-11-06.md")
+            self.assertIsNone(prev)
+            out = delta.delta(None, CUR, skipped)
+            self.assertTrue(out.startswith("Not compared: no valid earlier scorecard."))
+            self.assertIn("2026-11-01.md: scores: Architecture score must be 1-5", out)
+            self.assertNotIn("First run.", out)
+
+    def test_unreadable_earlier_is_skipped(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            folder = Path(d)
+            (folder / "2026-10-01.md").write_text(PREV)
+            (folder / "2026-11-01.md").write_bytes(b"\xff\xfe not utf-8")
+            prev, skipped = delta.pick_previous(folder, folder / "2026-11-06.md")
+            self.assertEqual(prev.name, "2026-10-01.md")
+            self.assertTrue(skipped[0].startswith("2026-11-01.md: can't read it"))
+
+    def test_same_day_order(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            folder = Path(d)
+            for name in ["2026-11-06.md", "2026-11-06-1.md", "2026-11-06-0.md"]:
+                (folder / name).write_text(GOOD)
+            self.assertEqual(delta.previous_in(folder, folder / "2026-11-06-1.md").name, "2026-11-06.md")
+            self.assertEqual([p.name for p in delta.earlier_in(folder, folder / "2026-11-07.md")],
+                             ["2026-11-06-1.md", "2026-11-06.md"])
+
+    def test_missing_dir_refuses(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            with self.assertRaises(ContractError):
+                delta.pick_previous(Path(d) / "nope", Path(d) / "2026-11-06.md")
+
     def test_cli(self) -> None:
         script = HERE / "delta.py"
         run = lambda *a: subprocess.run([sys.executable, str(script), *a], capture_output=True)
@@ -100,6 +149,11 @@ class DeltaTest(unittest.TestCase):
             self.assertIn("Abstraction: 3 → 4", res.stdout.decode())
             first = run("--dir", str(folder), str(folder / "2026-11-01.md"))
             self.assertEqual(first.stdout.decode().strip(), "First run.")
+            (folder / "2026-11-03.md").write_text(PREV.replace("<!-- size:start -->", ""))
+            skipping = run("--dir", str(folder), str(folder / "2026-11-06.md"))
+            self.assertEqual(skipping.returncode, 0)
+            self.assertIn("- 2026-11-03.md: ", skipping.stdout.decode())
+            self.assertIn("Since 2026-11-01", skipping.stdout.decode())
             (folder / "2026-10-01.md").write_text(PREV.replace("<!-- size:start -->", ""))
             bad = run(str(folder / "2026-10-01.md"), str(folder / "2026-11-06.md"))
             self.assertEqual(bad.returncode, 1)
