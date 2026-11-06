@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
-# decision-checker gate: a Claude Code Stop hook.
+# decision-checker gate: a Claude Code Stop hook. Also runs unchanged in
+# DeepSeek Harness through its dsh-hooks-claude-code bridge.
 #
 # Blocks the agent from finishing once, when the branch changes non-doc files
 # but no decisions.md was written or updated. The agent is told to run
-# decision-checker first. It never blocks twice in a row (stop_hook_active),
-# and it steps aside whenever it can't tell: no git repo, no base branch.
+# decision-checker first. It self-limits: it never blocks twice in a row
+# (stop_hook_active) and never twice in one session for the same changes
+# (a marker in the git dir), because some harnesses always send
+# stop_hook_active=false and cap nothing. It steps aside whenever it can't
+# tell: no git repo, no base branch.
 #
 # Settings (env, all optional):
 #   DECISION_CHECKER_BASE  base ref to diff against (default: origin/HEAD,
@@ -47,6 +51,15 @@ printf '%s\n' "$changed" | grep -q '\(^\|/\)decisions\.md$' && exit 0
 # A gitignored ledger never shows in git, so accept one on disk.
 g ls-files --others --ignored --exclude-standard | grep -q '\(^\|/\)decisions\.md$' && exit 0
 printf '%s\n' "$changed" | grep -qv '\.md$' || exit 0
+
+# Self-limit: one nudge per session per set of changes.
+sid=$(field session_id)
+if [ -n "$sid" ]; then
+  mark="$(git rev-parse --git-dir)/decision-checker-gate/$(printf '%s' "$sid" | tr -c 'A-Za-z0-9._-' '_')"
+  key=$( { git rev-parse HEAD 2>/dev/null; printf '%s\n' "$changed"; } | git hash-object --stdin)
+  [ "$(cat "$mark" 2>/dev/null)" = "$key" ] && exit 0
+  mkdir -p "$(dirname "$mark")" && printf '%s' "$key" > "$mark"
+fi
 
 cat <<'EOF'
 {"decision": "block", "reason": "This branch changes code but has no decisions ledger. Before finishing, run the decision-checker skill in Check mode on this branch (no user is present: follow its rule 7) and save decisions.md. Then hand back the ledger, not the diff."}

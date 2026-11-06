@@ -46,8 +46,23 @@ Add to the project's `.claude/settings.json`, with the path pointing at wherever
 
 Set `DECISION_CHECKER_BASE` if the base branch isn't `origin/HEAD`, `origin/main`, or `origin/master`.
 
+It limits itself: never twice in a row, and never twice in one session for the same set of changed files (a marker under `.git/decision-checker-gate/`). Some harnesses never report a repeat stop, so the hook can't rely on the harness to stop it.
+
 Limits, on purpose: it checks that a ledger exists on the branch, not that it's good or current. A ledger written early and never updated still passes, and so does any gitignored `decisions.md` on disk. Deleting a ledger never counts as writing one. Quality is the skill's job; the hook only makes sure the check happened.
 
 ### 3. A firstmate task
 
 In a firstmate home, install this skill where workers can load it, then put the line from option 1 in the brief's `## Firstmate spec`. The brief's `## Captain's intent` is the baseline. The ledger counts as evidence for the captain, not authorization: merging still follows the project's merge authority.
+
+### 4. DeepSeek Harness
+
+DeepSeek Harness (`dsh`) discovers `<name>/SKILL.md` bundles in `<project>/.agents/skills` and `~/.agents/skills`, so this skill loads as-is. For the gate, mount its `@deepseek-ai/dsh-hooks-claude-code` bridge (experimental) and point `configPath` at the settings file from option 2:
+
+```yaml
+- name: '@deepseek-ai/dsh-hooks-claude-code'
+  config:
+    configPath: ./.claude/settings.json
+    projectDir: .
+```
+
+The bridge maps `Stop` to its `agent/turn-stopping` checkpoint, honors `{"decision": "block"}`, and passes `cwd` and `session_id`. It always sends `stop_hook_active: false` and has no cap on forced continuations, which is why the hook limits itself per session.

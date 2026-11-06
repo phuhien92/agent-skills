@@ -7,8 +7,8 @@ description: >-
   RADIO, design a news feed / autocomplete / Pinterest / docs / chat UI, asks
   to be grilled on a solution.md or Excalidraw board, or says "practice this
   design" / "walk me through each step" / "ask me one question at a time" /
-  /radio-system-design-practice. Use for any future system-design practice
-  session, not only news feed.
+  /radio-system-design-practice, for any system-design prompt, not only
+  news feed.
 ---
 
 # RADIO system design practice

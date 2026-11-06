@@ -113,6 +113,14 @@ CI: `.github/workflows/validate.yml` runs the validator on every push and PR.
 
 Newest first. Each entry says what we decided, why, what we turned down, where it can fail, and when to revisit it.
 
+### 2026-11-06: Support DeepSeek Harness without a DSH-specific build
+
+- **Decision:** ship the same `skills/<name>/SKILL.md` bundles to DeepSeek Harness (`dsh`) by linking them into `.agents/skills`. Reuse the Claude Code Stop hook through dsh's `dsh-hooks-claude-code` bridge instead of writing a Cordis plugin.
+- **Why:** dsh's filesystem skill provider reads exactly our format (`name` and `description` required, `user-invocable` and `disable-model-invocation` honored, bundle files loaded on demand) from `.agents/skills`. Its hook bridge maps `Stop` to `agent/turn-stopping` and honors `{"decision": "block"}`. Design rule 1 holds with zero forks.
+- **Turned down:** a native dsh plugin bundle (`package.json` with a `dsh` field). More reach (UI, events), but a second code path to maintain for one harness. Revisit only if a block needs dsh-only features.
+- **Where it can fail:** dsh is a preview (0.2.x) and the hook bridge is experimental. It always sends `stop_hook_active: false` and caps nothing, so the hook now self-limits per session. Verified against dsh source at 0.2.2-rc.1 (2026-11-04), not by running dsh: running it needs a model API key.
+- **Revisit when:** dsh ships a stop loop-guard or reaches 1.0.
+
 ### 2026-11-06: Enforce gates with structure, starting with a Stop hook
 
 - **Decision:** `decision-checker` ships `hooks/require-ledger.sh`. It blocks a Claude Code agent from finishing once when the branch changes code but has no `decisions.md`.
@@ -160,4 +168,5 @@ Newest first. Each entry says what we decided, why, what we turned down, where i
 
 - [dzhng/skills](https://github.com/dzhng/skills): the software factory loop, `audit-decisions`.
 - [kunchenguid/firstmate](https://github.com/kunchenguid/firstmate): `VISION.md`, the agent distro and command layer.
+- [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): `packages/skill/skill-filesystem` (skill discovery) and `packages/experimental/hooks-claude-code` (hook bridge).
 - [DeepSeek Harness post](https://x.com/deepseekharness/status/2116857257245987236), read through [MindStudio's write-up](https://www.mindstudio.ai/blog/deepseek-super-agent-harness-design) because the article itself blocks scrapers.
