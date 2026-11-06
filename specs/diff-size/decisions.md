@@ -248,3 +248,129 @@ Trivial calls folded: path unquoting, the header-tab strip, refusing `A...B`, th
 ## Next step
 
 Fix the three unsound parsing and config entries in `diff_size.py` with a temp-repo test each, then put the three needs-you calls in front of the user before slice 03 starts. Four of the ten entries sit in what the diff contains before parsing (config, binaries, files with no hunk, renames with edits). Settle "which git settings and file kinds the counts must survive" in 03's spec instead of finding them one by one.
+
+# Check 3: slice 03 product-code filter
+
+- **Scope:** commit `0c7aaf1` on `claude/diff-size`: the "Product-code filter (slice 03)" section of `skills/slice-spec/scripts/diff_size.py` plus the `literal` pathspec option, `test_diff_size_filter.py`, and `tools/test_skip_rules_drift.py`.
+- **Baseline:** `specs/diff-size/README.md`, `slices/03-product-filter.md`, and the slice 01 gate decisions above. Run by another workflow with no user present (rule 7): every confidence is capped at medium. Check 1 and Check 2 entries the code did not change are not relisted.
+- **Self-report:** missing beyond the commit message and the README prompt, so this ledger rests on an independent trace and throwaway probes in temp repos outside this repo.
+- **Tests:** `python3 -m unittest discover -s skills/slice-spec/scripts` passes (29 tests). `python3 -m unittest tools/test_skip_rules_drift.py` passes (3). codebase-rubric's tests pass (36). `python3 tools/validate.py` passes (7 skills, 0 errors). git 2.43, so the pre-2.40 working-tree fallback for attributes was not exercised.
+
+## Reproduction on brain-cli
+
+`count_product` on `7045e68..f6f554a` gives 513 new / 1,254 moved / 154 deleted / 1,253 moved out, skipping 54 not-code and 23 vendored-or-build files, as the README says. Of the 513 new lines, 402 are in `src/` and 111 are `specs/split-cli-commands/golden.sh`. Per commit, the filter matches the spike's indent-insensitive numbers except `138fb64` (177 new, not 171): the extra 6 lines are all `golden.sh`, which the spike's `:!specs` left out. For the head tree, `skip_reason` (judged from `git ls-tree`) and `size_report.py` (judged from a checkout of `f6f554a`) agree on all 213 tracked paths, and both pick the same 24 changed files as product code.
+
+## Check these first
+
+1. A file is kept or dropped by path, so lines from its skipped side still count.
+2. A skipped old side can still supply moves, so new product code counts as moved.
+3. Pointing the filter at a subfolder of the repo counts nothing.
+
+## Needs you
+
+### A skipped file paired as a rename disappears from the skip counts
+
+- **When:** `0c7aaf1`, `product_paths()`: a file is counted as skipped only when neither side is product code.
+- **Slice:** 03
+- **What happens now:** a commit deletes `dist/a.js` and adds `src/a.py` with the same lines. git pairs the two as a rename. The new side is product code and is kept; the `dist/` side is dropped from the diff, but it is not counted under "vendored or build folder" either, so the report names neither file as skipped (`test_build_output_cannot_supply_moves` asserts `skipped == {}`). `size_report.py` keeps the property that every path is either counted or skipped. The obvious alternative counts each non-product side under its own reason, so a rename out of `dist/` shows one skipped build file next to the new product file.
+- **The gap:** the slice asks for "a skipped-file count per reason" without saying whether the count is per file or per side, or what happens when only one side of a rename is skipped.
+- **Reach:** slice 04 prints this count. A reader checking "what was left out" will not see build or generated files that git happened to pair with product files.
+- **Verdict:** needs-you. Only a reported count changes. **Recommended call:** count skipped sides, not skipped files, so every changed path is either counted or skipped, and say so in 04's output note. **To reverse:** count a file only when both sides are skipped, as now.
+- **Confidence:** medium.
+
+### The two copies of the rules disagree when the user has an attributes file
+
+- **When:** `0c7aaf1`, `marked_paths()` passes `-c core.attributesFile=/dev/null`; `size_report.marked_paths()` does not.
+- **Slice:** 03
+- **What happens now:** a user's global git config sets `core.attributesFile` to a file containing `*.py linguist-generated`. `size_report.py` skips `src/a.py` as marked generated. `diff_size.py` ignores that file and counts the same `src/a.py` as 5 new lines. Both read the repo's own `.gitattributes` and `.git/info/attributes` the same way. The drift test cannot see this, because it compares constants and calls the predicates with an empty `marked` set.
+- **The gap:** Check 2 said a user's settings must not change diff_size's counts. The README says the skip rules are copied so the two scripts agree. Neither said which wins when those collide.
+- **Reach:** a user who checks a file's verdict with `size_report.py` and then sizes a commit with `diff_size.py` can get two different answers for the same tree.
+- **Verdict:** needs-you. diff_size's choice follows Check 2, but whether size_report should match is a codebase-rubric call outside this slice. **Recommended call:** keep diff_size ignoring the user's attributes file and record the difference in the drift test's docstring. Change `size_report.py` only in its own skill's work. **To reverse:** drop the `core.attributesFile` override from diff_size's `marked_paths()`.
+- **Confidence:** medium.
+
+## Unsound
+
+### A file is kept or dropped by path, so lines from its skipped side still count
+
+- **When:** `0c7aaf1`, `product_paths()` keeps a set of paths, and `count_product()` zeroes a side only when its path is missing from that set.
+- **Slice:** 03
+- **What happens now:** `product_paths()` judges the old side of each file against the base tree and the new side against the head tree. Then it throws away which side passed and keeps just the path. If either side passes, the whole file goes into the diff and both sides' lines count. Probes, each expected to add 0 new lines:
+  - In one commit, `.gitattributes` gains `gen/** linguist-generated` and `gen/x.py` gains 4 lines. The 4 lines count as new.
+  - `pkg/package.json` is added while `pkg/build/out.js` gains 4 lines. Those 4 lines count as new, although the head tree makes `pkg/build/` build output.
+  - `src/a.py` gains a `# @generated` first line plus 4 lines. 5 new.
+  - `src/a.py` becomes binary. Because `DIFF_FLAGS` has `--text`, its bytes are diffed as text: 4 "new" lines and 5 deleted. The `--text` comment in `DIFF_FLAGS` says the filter keeps binaries away from it. That only holds when both sides are binary.
+  - `src/t.py` becomes a symlink. Its target string counts as 1 new line. The reverse, a symlink becoming a file, counts the old target as 1 deleted line.
+
+  The obvious alternative carries the verdict per side. Lines on a skipped side contribute nothing in any column.
+- **The gap:** the slice says added lines are judged against the commit's tree and deleted lines against the parent's. It doesn't say what to do with one file whose two sides get different verdicts. The tests cover only files whose sides agree, plus one rename.
+- **Reach:** the tiered "new" number grows whenever a commit marks a file generated, adds a package root, or replaces a source file with a binary or a symlink. These are exactly the commits where the filter exists to help.
+- **Verdict:** unsound. The slice's own property, added lines judged against the commit's tree, does not hold. **Redo from:** every line is counted only if its own side is product code, in every column. A file that changes type, gains a generated mark, or turns binary contributes nothing from its skipped side. Add a temp-repo test for each case above.
+- **Confidence:** low.
+
+### A skipped old side can still supply moves, so new product code counts as moved
+
+- **When:** `0c7aaf1`, `count_product()` passes whole paths to the diff, and its docstring says non-product files "can't supply moves".
+- **Slice:** 03
+- **What happens now:** the base has `.gitattributes` with `gen/** linguist-generated` and a 5-line `gen/x.py`. The head deletes `.gitattributes`, rewrites `gen/x.py` to one line, and adds `src/y.py` with the 5 lines that were in the generated file. The old side of `gen/x.py` is generated, but its new side is now product code, so the path enters the diff, and git colours the old generated lines as moved into `src/y.py`. `src/y.py` counts 0 new / 5 moved. It should be 5 new, because the code it came from was never reviewed as product code. The obvious alternative keeps a skipped side out of move matching entirely.
+- **The gap:** the README's next-agent prompt (from Check 2) said to keep non-product files out of the diff so they can't supply moves. It talked about files and didn't cover a file whose old side is skipped and new side is not.
+- **Reach:** the tiered number undercounts in the direction the README warns about: code copied out of generated or build output passes as relocation.
+- **Verdict:** unsound. The stated property ("can't supply moves") does not hold. **Redo from:** a side that is not product code is never a move source or target. Zeroing its counts after the diff is not enough. The diff that finds moves must not contain it.
+- **Confidence:** low.
+
+### Pointing the filter at a subfolder of the repo counts nothing
+
+- **When:** `0c7aaf1`, `count_product()` passes repo-root paths as `--literal-pathspecs`, which git reads relative to the folder it runs in.
+- **Slice:** 03
+- **What happens now:** a commit adds `src/a.py` and `lib/b.py`, 5 lines each. `count_product(repo_root, …)` gives 10 new. `count_product(repo_root / "src", …)` gives 0 new and no error. `ls-tree --full-tree` and `diff --name-status` return root-relative paths, but the diff runs with `-C src`, so the pathspec `src/a.py` means `src/src/a.py`. Slice 02's `count_commit(repo_root / "src", …)` still gives 10. The obvious alternative anchors the pathspecs at the top of the repo (`:(top,literal)` magic, or running git at the repo's top level).
+- **The gap:** the slice didn't say which folder the repo argument may name. Slice 02 worked from any folder inside the repo, and nothing tests that for 03.
+- **Reach:** slice 04's CLI will likely take a repo path or the current folder. Run from a subfolder, it would print an all-zero table with no warning.
+- **Verdict:** unsound. A regression from slice 02 that gives a silent wrong answer. **Redo from:** the counts are the same from any folder inside the repo, and a test runs the filter from a subfolder.
+- **Confidence:** low.
+
+### The drift test can't see a change to the package-root or generated-mark rules
+
+- **When:** `0c7aaf1`, `tools/test_skip_rules_drift.py`.
+- **Slice:** 03
+- **What happens now:** I edited copies of the two scripts in a temp folder, outside the repo. Editing a `LOCKFILES` entry, `HEADER_LINES`, a skip label, or the root-`dist/` branch in only diff_size's copy fails the drift test, as the slice requires. Deleting the package-root branch of diff_size's `in_build_dir()`, or its `marked-generated` rule, still passes. The test calls `skip_reason` with an empty tree and an empty `marked` set, and it never builds a `build/` folder under a package marker. The obvious alternative gives both copies the same small fixture: a tree with a package marker for the build rule, and a marked set for the attributes rule.
+- **The gap:** the slice decided that the test compares "constants and pure predicates". It didn't list which predicates or which branches.
+- **Reach:** the package-root rule is the one the two copies implement differently (disk vs tree), so it is the one most likely to drift.
+- **Verdict:** unsound. Two of the seven rules can drift without failing the test. **Redo from:** every rule in `skip_reason`, and the order they run in, has a case in the drift test that fails when only one copy changes.
+- **Confidence:** medium.
+
+### A commit with tens of thousands of product files crashes with a raw error
+
+- **When:** `0c7aaf1`, `count_product()` passes every product path to `git diff` on the command line.
+- **Slice:** 03
+- **What happens now:** a commit adds 40,000 one-line `.py` files with paths of about 70 characters. Linux's 2 MB argument limit is exceeded, and Python raises `OSError: [Errno 7] Argument list too long` instead of a `DiffSizeError`, so slice 04's CLI would crash with a traceback. 5,000 files work (1 second). Skipped files never reach the command line, so vendoring a dependency doesn't trigger it, but a repo-wide codemod or a first import of a large codebase can. The obvious alternative keeps the path list off the command line, for example by running the diff without pathspecs and excluding the skipped paths instead, or by splitting the list where moves can't cross.
+- **The gap:** the slice didn't mention commit size. Slice 04's non-goal says the script fails only on bad input.
+- **Reach:** the PR total diffs a whole range at once, which makes the limit easier to reach than one commit.
+- **Verdict:** unsound. A valid input crashes. **Redo from:** any number of changed files is counted, or the script exits with a named error, and a test covers a list over the argument limit.
+- **Confidence:** medium.
+
+## Sound
+
+### Paths go to git as literal pathspecs
+
+- **When:** `0c7aaf1`, the `literal` option on `diff_text()` and `count_range()`.
+- **Slice:** 03
+- **What happens now:** product paths are passed with `--literal-pathspecs`, so git takes them as names, not patterns. Probes with spaces, a double quote, `[x]?`, a leading dash (`-lead.py`), `:(top)x.py`, a tab, a backslash and non-ASCII letters were all counted once, 45 of 45 lines. Without the flag, `[abc]*.py` would match other files and `:(top)…` would be read as pathspec magic.
+- **The gap:** the pathspec format was delegated to the worker.
+- **Reach:** slice 04 reuses `count_range`.
+- **Verdict:** sound.
+- **Confidence:** medium.
+
+### Submodules and symlinks count as "not a file" with no lines
+
+- **When:** `0c7aaf1`, `product_paths()`: only modes `100644` and `100755` are read.
+- **Slice:** 03
+- **What happens now:** adding a submodule counts 0 lines and skips it as "not a file" (its `.gitmodules` skips as not code). Adding or deleting a symlink skips it the same way. This matches `size_report.py`, which skips symlinks and submodule folders as "symlink or not a file". A symlink that replaces a file, or the reverse, is the entry above.
+- **The gap:** delegated to the worker.
+- **Reach:** none beyond this slice.
+- **Verdict:** sound.
+- **Confidence:** medium.
+
+Trivial calls folded: the `Side` and `Filtered` record shapes, skip reasons keyed by stable ids with phrases in `SKIP_LABELS`, a skipped file counted under its newest side's reason, `git_at_least` duplicating `check_git`'s version parse, and a `cat-file --batch` parse that reads one byte past a `missing` record but still lands inside the next object's header, so it survives (a missing blob is read as empty, judged as product code, and the diff then fails with a named error) (5, delegated to the worker or harmless). Unprobed: `blob_heads` holds every changed blob whole in memory although it reads only the first 8 KB of each, and the pre-2.40 working-tree fallback for attributes.
+
+## Next step
+
+Rebuild `product_paths()` and `count_product()` around sides instead of paths, with one temp-repo test for each case in the first two unsound entries, and make the filter work from a subfolder. Then put the two needs-you calls in front of the user before slice 04 starts. Three of the eight entries come from one gap: the slice judges sides, but the diff works on files. Settle in the spec what the unit is: a file, a side, or a line.

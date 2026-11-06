@@ -16,9 +16,12 @@ Standard library only. Needs git 2.17 or later.
 """
 from __future__ import annotations
 
+import os
 import re
 import subprocess
-from dataclasses import dataclass
+import tempfile
+from pathlib import PurePosixPath
+from dataclasses import dataclass, field
 from pathlib import Path
 
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
@@ -88,9 +91,9 @@ class FileCount:
         return self.new_path or self.old_path or ""
 
 
-def git(repo: Path, *args: str, check: bool = True) -> str:
+def git(repo: Path, *args: str, check: bool = True, env: dict[str, str] | None = None) -> str:
     try:
-        done = subprocess.run(["git", "-C", str(repo), *args], capture_output=True)
+        done = subprocess.run(["git", "-C", str(repo), *args], capture_output=True, env=env)
     except FileNotFoundError:
         raise DiffSizeError("git is not installed") from None
     if check and done.returncode != 0:
@@ -233,34 +236,36 @@ def parse(text: str) -> list[FileCount]:
     return files
 
 
-def diff_text(repo: Path, base: str, head: str, pathspecs: list[str] | None = None) -> str:
+def diff_text(repo: Path, base: str, head: str, pathspecs: list[str] | None = None,
+              env: dict[str, str] | None = None) -> str:
     """Coloured diff of base..head. Moves are matched only among the files diffed, so
     pass pathspecs to keep non-product files (build output, say) from supplying moves."""
     config: list[str] = []
     for key, value in PINNED_CONFIG.items():
         config += ["-c", f"{key}={value}"]
     tail = ["--", *pathspecs] if pathspecs else []
-    return git(repo, *config, "diff", *DIFF_FLAGS, base, head, *tail)
+    return git(repo, *config, "diff", *DIFF_FLAGS, base, head, *tail, env=env)
 
 
-def line_count(repo: Path, commit: str, path: str) -> int:
+def line_count(repo: Path, commit: str, path: str, env: dict[str, str] | None = None) -> int:
     blob = subprocess.run(["git", "-C", str(repo), "cat-file", "-p", f"{commit}:{path}"],
-                          capture_output=True).stdout
+                          capture_output=True, env=env).stdout
     if not blob:
         return 0
     return blob.count(b"\n") + (0 if blob.endswith(b"\n") else 1)
 
 
-def count_range(repo: Path, base: str, head: str,
-                pathspecs: list[str] | None = None) -> list[FileCount]:
-    """Per-file counts for `base..head` diffed at once, limited to pathspecs if given."""
-    files = parse(diff_text(repo, base, head, pathspecs))
+def count_range(repo: Path, base: str, head: str, pathspecs: list[str] | None = None,
+                env: dict[str, str] | None = None) -> list[FileCount]:
+    """Per-file counts for `base..head` diffed at once, limited to pathspecs if given.
+    `base` and `head` may be any tree-ish; `env` lets git find temporary objects."""
+    files = parse(diff_text(repo, base, head, pathspecs, env))
     for f in files:
         if f.old_path and f.new_path and f.old_path != f.new_path:
             # A rename: the lines it kept moved with it. Edited lines are already in the
             # hunks; what the hunks don't show was carried over unchanged.
-            f.moved += line_count(repo, head, f.new_path) - f.new - f.moved
-            f.moved_out += line_count(repo, base, f.old_path) - f.deleted - f.moved_out
+            f.moved += line_count(repo, head, f.new_path, env) - f.new - f.moved
+            f.moved_out += line_count(repo, base, f.old_path, env) - f.deleted - f.moved_out
     return files
 
 
@@ -285,3 +290,276 @@ def commits_in(repo: Path, rev_range: str) -> list[str]:
         out = git(repo, "rev-list", "--reverse", "--first-parent", rev_range)
         return out.split()
     return [resolve(repo, rev_range)]
+
+
+# --- Product-code filter (slice 03) -------------------------------------------------
+# The rule data below is copied from skills/codebase-rubric/scripts/size_report.py so
+# each skill installs on its own. tools/test_skip_rules_drift.py fails if they drift.
+# The predicates differ on purpose: size_report reads files on disk; here each side of
+# a diff is judged against its own commit's tree.
+
+LOCKFILES = {
+    "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "bun.lockb", "bun.lock",
+    "Cargo.lock", "poetry.lock", "Pipfile.lock", "uv.lock", "composer.lock",
+    "Gemfile.lock", "go.sum", "mix.lock", "pubspec.lock", "Podfile.lock",
+    "flake.lock", "packages.lock.json",
+}
+ANY_DEPTH_DIRS = {"node_modules", "vendor", ".git"}
+ROOT_BUILD_DIRS = {"dist", "build"}
+PACKAGE_MARKERS = ("package.json", "pyproject.toml", "setup.py", "Cargo.toml",
+                   "go.mod", "pom.xml", "build.gradle", "build.gradle.kts",
+                   "composer.json", "Gemfile", "mix.exs", "pubspec.yaml")
+CODE_EXTENSIONS = {
+    ".py", ".pyi", ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".mts", ".cts",
+    ".go", ".rs", ".java", ".kt", ".kts", ".scala", ".swift", ".m", ".mm",
+    ".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh", ".cs", ".fs", ".rb",
+    ".php", ".ex", ".exs", ".erl", ".clj", ".cljs", ".dart", ".lua", ".pl",
+    ".pm", ".r", ".jl", ".hs", ".ml", ".mli", ".elm", ".vue", ".svelte",
+    ".astro", ".sh", ".bash", ".zsh", ".fish", ".ps1", ".sql", ".graphql",
+    ".proto", ".zig", ".nim", ".v", ".sv", ".vhd", ".tf", ".hcl",
+    ".css", ".scss", ".sass", ".less", ".html", ".htm", ".mdx",
+}
+CODE_NAMES = {"Makefile", "Dockerfile", "Rakefile", "Justfile"}
+# Stable keys for --json; phrases for the text table.
+SKIP_LABELS = {
+    "not-a-file": "symlink or not a file",
+    "not-code": "not a code file",
+    "lockfile": "lockfile",
+    "vendored-or-build": "vendored or build folder",
+    "marked-generated": "marked generated or vendored",
+    "binary": "binary",
+    "generated-header": "generated header",
+}
+GENERATED_MARKERS = (
+    "@generated", "do not edit", "code generated by", "autogenerated",
+    "auto-generated", "this file is generated", "automatically generated",
+)
+HEADER_LINES = 5
+SNIFF_BYTES = 8192
+
+
+def is_code(rel: str) -> bool:
+    p = PurePosixPath(rel)
+    return p.suffix.lower() in CODE_EXTENSIONS or p.name in CODE_NAMES
+
+
+def in_build_dir(tree_files: set[str], rel: str) -> bool:
+    """dist/ or build/ directly under the repo root or a package root, in this tree."""
+    parts = PurePosixPath(rel).parts[:-1]
+    for i, part in enumerate(parts):
+        if part in ANY_DEPTH_DIRS:
+            return True
+        if part in ROOT_BUILD_DIRS:
+            parent = "/".join(parts[:i])
+            if i == 0 or any(f"{parent}/{m}" in tree_files for m in PACKAGE_MARKERS):
+                return True
+    return False
+
+
+def skip_reason(rel: str, head: bytes, marked: set[str], tree_files: set[str]) -> str | None:
+    """Same rules, same order as size_report.skip_reason."""
+    if PurePosixPath(rel).name in LOCKFILES:
+        return "lockfile"
+    if in_build_dir(tree_files, rel):
+        return "vendored-or-build"
+    if not is_code(rel):
+        return "not-code"
+    if rel in marked:
+        return "marked-generated"
+    if b"\0" in head:
+        return "binary"
+    top = b"\n".join(head.splitlines()[:HEADER_LINES]).decode("utf-8", "replace").lower()
+    if any(m in top for m in GENERATED_MARKERS):
+        return "generated-header"
+    return None
+
+
+@dataclass
+class Side:
+    """One side of a diff: a commit's tree, read once."""
+    treeish: str
+    entries: dict[str, tuple[str, str]] = field(default_factory=dict)  # path -> (mode, sha)
+
+    @property
+    def files(self) -> set[str]:
+        return set(self.entries)
+
+
+def read_side(repo: Path, treeish: str) -> Side:
+    out = subprocess.run(["git", "-C", str(repo), "ls-tree", "-r", "-z", "--full-tree", treeish],
+                         capture_output=True, check=True).stdout.decode("utf-8", "surrogateescape")
+    side = Side(treeish)
+    for record in filter(None, out.split("\0")):
+        meta, _, path = record.partition("\t")
+        mode, _kind, sha = meta.split(" ")
+        side.entries[path] = (mode, sha)
+    return side
+
+
+def blob_heads(repo: Path, shas: list[str]) -> dict[str, bytes]:
+    """The first SNIFF_BYTES of each blob, read in one `git cat-file --batch`."""
+    if not shas:
+        return {}
+    out = subprocess.run(["git", "-C", str(repo), "cat-file", "--batch"],
+                         input=("\n".join(shas) + "\n").encode(), capture_output=True, check=True).stdout
+    heads, pos = {}, 0
+    for sha in shas:
+        end = out.index(b"\n", pos)
+        header = out[pos:end].split()
+        size = int(header[2]) if len(header) == 3 else 0
+        heads[sha] = out[end + 1:end + 1 + min(size, SNIFF_BYTES)]
+        pos = end + 1 + size + 1
+    return heads
+
+
+def git_at_least(major: int, minor: int) -> bool:
+    out = subprocess.run(["git", "--version"], capture_output=True, text=True).stdout
+    found = re.search(r"(\d+)\.(\d+)", out)
+    return bool(found) and tuple(int(n) for n in found.groups()) >= (major, minor)
+
+
+def marked_paths(repo: Path, side: Side, paths: list[str]) -> tuple[set[str], bool]:
+    """Paths marked linguist-generated or linguist-vendored in that side's tree.
+
+    Uses `git check-attr --source` (git 2.40+). On older git, falls back to the working
+    tree's .gitattributes and says so (the second value is True)."""
+    if not paths:
+        return set(), False
+    from_worktree = not git_at_least(2, 40) or side.treeish == EMPTY_TREE
+    source = [] if from_worktree else [f"--source={side.treeish}"]
+    done = subprocess.run(
+        ["git", "-C", str(repo), "-c", "core.attributesFile=/dev/null", "check-attr", "-z",
+         *source, "--stdin", "linguist-generated", "linguist-vendored"],
+        input="\0".join(paths).encode("utf-8", "surrogateescape"), capture_output=True)
+    fields = done.stdout.decode("utf-8", "surrogateescape").split("\0")
+    marked = set()
+    for i in range(0, len(fields) - 2, 3):
+        path, _attr, value = fields[i:i + 3]
+        if value in ("set", "true"):
+            marked.add(path)
+    return marked, from_worktree and side.treeish != EMPTY_TREE
+
+
+def changed_files(repo: Path, base: str, head: str) -> list[tuple[str | None, str | None]]:
+    """(old path, new path) per changed file, with the same rename detection as the count."""
+    out = subprocess.run(
+        ["git", "-C", str(repo), "-c", "diff.renames=true", "-c", "core.quotePath=false",
+         "-c", "diff.ignoreSubmodules=none", "diff", "--name-status", "-z", "-M",
+         "--no-ext-diff", base, head], capture_output=True, check=True,
+    ).stdout.decode("utf-8", "surrogateescape").split("\0")
+    pairs, i = [], 0
+    while i < len(out) and out[i]:
+        status = out[i]
+        if status[0] in "RC":
+            pairs.append((out[i + 1], out[i + 2]) if status[0] == "R" else (None, out[i + 2]))
+            i += 3
+        else:
+            path = out[i + 1]
+            pairs.append((None if status[0] == "A" else path, None if status[0] == "D" else path))
+            i += 2
+    return pairs
+
+
+@dataclass
+class Filtered:
+    paths: list[str]                                       # product paths, either side
+    skipped: dict[str, int] = field(default_factory=dict)  # reason -> changed files
+    attrs_from_worktree: bool = False
+    drop_old: list[str] = field(default_factory=list)      # changed old sides that aren't product
+    drop_new: list[str] = field(default_factory=list)      # changed new sides that aren't product
+
+
+def product_paths(repo: Path, base: str, head: str) -> Filtered:
+    """Which changed files are product code. A file's new side is judged against the
+    head tree, its old side against the base tree; a file is skipped (and counted once,
+    under the reason of its newest side) when no side of it is product code."""
+    pairs = changed_files(repo, base, head)
+    sides = {"old": read_side(repo, base), "new": read_side(repo, head)}
+    wanted = {"old": sorted({o for o, _ in pairs if o}), "new": sorted({n for _, n in pairs if n})}
+    reasons: dict[tuple[str, str], str | None] = {}
+    worktree_attrs = False
+    for key, side in sides.items():
+        marked, fallback = marked_paths(repo, side, wanted[key])
+        worktree_attrs = worktree_attrs or fallback
+        regular = [p for p in wanted[key] if side.entries.get(p, ("",))[0] in ("100644", "100755")]
+        heads = blob_heads(repo, sorted({side.entries[p][1] for p in regular}))
+        tree = side.files
+        for p in wanted[key]:
+            if p not in regular:
+                reasons[(key, p)] = "not-a-file"
+            else:
+                reasons[(key, p)] = skip_reason(p, heads[side.entries[p][1]], marked, tree)
+    result = Filtered([], attrs_from_worktree=worktree_attrs)
+    keep: set[str] = set()
+    for old, new in pairs:
+        old_ok = old is not None and reasons[("old", old)] is None
+        new_ok = new is not None and reasons[("new", new)] is None
+        if old_ok:
+            keep.add(old)
+        elif old is not None:
+            result.drop_old.append(old)
+        if new_ok:
+            keep.add(new)
+        elif new is not None:
+            result.drop_new.append(new)
+        if not (old_ok or new_ok):
+            reason = reasons[("new", new)] if new is not None else reasons[("old", old)]
+            result.skipped[reason] = result.skipped.get(reason, 0) + 1
+    result.paths = sorted(keep)
+    return result
+
+
+def toplevel(repo: Path) -> Path:
+    out = git(repo, "rev-parse", "--show-toplevel").strip()
+    return Path(out)
+
+
+def scratch_env(repo: Path, objects: Path) -> dict[str, str]:
+    """An environment where new git objects land in `objects`, a temporary folder, while
+    the repo's own objects (and its alternates) stay readable. Nothing is written to the
+    repo."""
+    own = Path(git(repo, "rev-parse", "--git-path", "objects").strip())
+    own = own if own.is_absolute() else (repo / own)
+    alternates = [str(own.resolve())]
+    info = own / "info" / "alternates"
+    if info.is_file():
+        alternates += [line.strip() for line in info.read_text().splitlines()
+                       if line.strip() and not line.startswith("#")]
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    env.update(GIT_OBJECT_DIRECTORY=str(objects), GIT_ALTERNATE_OBJECT_DIRECTORIES=os.pathsep.join(alternates),
+               GIT_INDEX_FILE=str(objects.parent / "index"))
+    return env
+
+
+def pruned_tree(repo: Path, treeish: str, drop: list[str], env: dict[str, str]) -> str:
+    """`treeish` with the `drop` paths removed, written as a temporary tree object."""
+    if not drop:
+        return git(repo, "rev-parse", f"{treeish}^{{tree}}", env=env).strip()
+    git(repo, "read-tree", treeish, env=env)
+    done = subprocess.run(["git", "-C", str(repo), "update-index", "--force-remove", "-z", "--stdin"],
+                          input="\0".join(drop).encode("utf-8", "surrogateescape"),
+                          capture_output=True, env=env)
+    if done.returncode != 0:
+        raise DiffSizeError(done.stderr.decode("utf-8", "replace").strip())
+    return git(repo, "write-tree", env=env).strip()
+
+
+def count_product(repo: Path, base: str, head: str) -> tuple[list[FileCount], Filtered]:
+    """Counts for product code only.
+
+    Each side is judged on its own: a side that isn't product code is removed from a
+    temporary copy of its tree, and the two copies are diffed. So a skipped side adds
+    no lines and supplies no moves (a src/ line never counts as moved from dist/), and
+    no path list is passed to git, whatever the size of the commit."""
+    repo = toplevel(repo)
+    filtered = product_paths(repo, base, head)
+    if not filtered.paths:
+        return [], filtered
+    with tempfile.TemporaryDirectory(prefix="diff-size-") as tmp:
+        objects = Path(tmp) / "objects"
+        objects.mkdir()
+        env = scratch_env(repo, objects)
+        base_tree = pruned_tree(repo, base, filtered.drop_old, env)
+        head_tree = pruned_tree(repo, head, filtered.drop_new, env)
+        files = count_range(repo, base_tree, head_tree, env=env)
+    return files, filtered
