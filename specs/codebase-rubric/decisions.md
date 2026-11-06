@@ -360,3 +360,107 @@ Five of the sixteen entries sit on how strict `check_scorecard.py` is (not-score
 ## Next step
 
 The user answers the three "Check these first" entries, then the checker gets its strictness pass (skip counts and sample counts marked and checked, template and checker matched) before 06 starts reading `parse`.
+
+---
+
+# Check 3: slice 06, and the second ledger's fixes
+
+Check mode, run unattended (rule 7): no user present, every confidence capped at medium, saved without asking. Baseline: `specs/codebase-rubric/README.md` plus `slices/`. The calls the README records "after the second ledger" (three areas scored, styles and markup as code, `--repo`, sample sizes, one-agent fallback, folder layout in Modularity 5) are the user's and aren't listed.
+
+- **Scope:** `86a07e8..a975445` (`58c31b8`, `8bf8fe7`, `a975445`). Focus: slice 06 (`scripts/delta.py`, `scripts/test_delta.py`), plus the fixes to `check_scorecard.py`, `scorecard.md`, `size_report.py`, the keen fixture, and spike 03c.
+- **Self-report:** the implementer isn't live. Commit messages and the README "Next agent prompt" name no guesses, so this check rests on tracing.
+- **Evidence run:** `python3 -m unittest discover -s skills/codebase-rubric/scripts` passes 29 tests. Throwaway probes of `delta.py` and `check_scorecard.py` ran in the session scratchpad and were deleted. No keen-design-system clone exists here, so the keen SHA and skip counts could not be checked.
+- **Second ledger, fix status:** confirmed fixed: CSS, SCSS, Less, HTML, MDX counted as code; at least three areas scored; each scorer gets "How to score" (07 seam); `Skipped:` inside the size markers and size rows validated; samples need 1 <= M and N <= M; the trace's `resolve.ts:23` hop restored; `--repo` catches a missing file and a line past the end. Resolved by the user's calls: Errors "not scored", sampling thresholds, the one-agent fallback, Modularity 5. Still open: the template's enforced-rules list (re-listed below, since the fix changed it), the keen fixture's unsourced values, and two `--repo` gaps (both new entries below).
+- **Skipped as delegated:** delta wording (06).
+- **Trivial, folded:** 3 calls. Score text is compared exactly, so "not scored" to "Not Scored" shows as a change though the checker accepts both; `.sass` and `.htm` were added beside the extensions the user named; `2026-11-06-1.md` and `2026-11-06.md` sort as the same scorecard.
+
+## Check these first
+
+1. The keen fixture's commit and skip counts were made "backed by the spike" by writing them into the spike afterwards (unsound, low).
+2. `delta.py` diffs scorecards the checker rejects (unsound, medium).
+3. `size_report.py`'s "(none over 500)" row fails the checker and `delta.py` reads it as a file (unsound, medium).
+
+Three of the seven entries sit on the seam between `size_report.py`, `check_scorecard.py`, and `delta.py`: each script has its own idea of a valid size table. Recommend the spec name one owner for "valid scorecard" (the checker) and have the other two defer to it before 07 wires them together.
+
+## unsound
+
+### The keen fixture's commit and skip counts were "backed by the spike" by editing the spike to match
+
+- **When:** `58c31b8`, `spikes/03c-per-area-keen.md` line 3, `scripts/fixtures/good-keen.md`
+- **Slice:** 05
+- **What happens now:** check 2 found that the fixture's commit `847e726` and its skip line ("generated header: 4, lockfile: 2, not a code file: 61") appeared in no spike. The fix added both to the 03c spike's intro, in the same commit, as "Size run with the code-only rules", with no command, date, or output recorded. One commit later (`8bf8fe7`) CSS, SCSS, HTML, and MDX became code, so a "not a code file" count of 61 for a design system describes rules that no longer apply. The obvious alternative reruns `size_report.py` on a keen clone, records that run in the spike, or marks the values in the fixture as illustrative.
+- **The gap:** check 2's redo said each fixture value must come from a recorded spike or a real run; it didn't say a spike can't be amended after the fact.
+- **Reach:** spikes are the evidence the user accepted 02 and 03 on. Later workers learn that a missing source can be fixed by writing it into the source.
+- **Verdict:** unsound. The evidence was made to match the claim, not the other way round. **Redo from:** a spike is a record of a run; a fact added later names the run that produced it (command, commit, date), and counts made under rules since changed are marked stale.
+- **Confidence:** low
+
+### `delta.py` diffs scorecards the checker rejects
+
+- **When:** `a975445`, `delta.py` `delta`
+- **Slice:** 06
+- **What happens now:** `delta.py` calls only `parse`, which checks that markers exist. Probes, each on a scorecard `check_scorecard.py` rejects:
+  - a previous row `` | `a.ts` | lots | huge | `` gives "`a.ts`: huge → over target (500) (lots → 600 lines)";
+  - a previous scorecard missing its Components row gives "Components: missing → 4";
+  - a previous row with only two cells is dropped by `parse`, so the file shows as "New over 500".
+
+  The docstring says it "exits 1 with a reason if either file breaks the contract". The obvious alternative runs `check_scorecard.problems` on both files and exits 1 with those reasons if either has any.
+- **The gap:** slice 06 says "a previous file with missing markers exits 1 with a reason, never guesses", naming only markers.
+- **Reach:** 07 pastes this output into the new scorecard, so a damaged old scorecard produces a confident, wrong delta. Refusing would also refuse scorecards written under an older contract; that's the price of "never guesses".
+- **Verdict:** unsound. It prints a delta from tables it knows nothing about, while claiming it checks the contract. **Redo from:** a delta is printed only when both scorecards pass `check_scorecard.problems`; otherwise exit 1 with the checker's reasons.
+- **Confidence:** medium
+
+### `size_report.py`'s "(none over 500)" row fails the checker, and `delta.py` reads it as a file
+
+- **When:** `58c31b8`, `check_scorecard.py` size-row check; `a975445`, `delta.py`; existing `size_report.py` `as_text`
+- **Slice:** 04, 05, 06
+- **What happens now:** on a repo with no code file over 500 lines (keen-design-system, the user's second test repo), `size_report.py` prints a row `| (none over 500) | | |`. The template says to paste its rows. Pasted, the checker fails: "bad row for (none over 500): lines '', tier ''". If one gets through as the previous scorecard, `delta.py` reports "Now under 500 or gone: `(none over 500)` (was  lines)". The script also prints its own header and separator, which pasted under the template's header becomes a second, failing row. The obvious alternative makes what the size script prints for pasting exactly what the checker accepts, with an empty table meaning "none over 500".
+- **The gap:** slice 05 says to paste rows from `size_report.py`; no slice says the two must agree on the empty case or the header.
+- **Reach:** 07's success test is a real run plus a passing checker; on any repo like keen it fails on the first try.
+- **Verdict:** unsound. Two scripts in the same pipeline disagree on a valid size table. **Redo from:** the rows `size_report.py` emits for a scorecard pass `check_scorecard.py` unchanged, including when no file is over 500, and `delta.py` never treats a placeholder as a path.
+- **Confidence:** medium
+
+### The template still lists rules the checker doesn't enforce (open from check 2)
+
+- **When:** `58c31b8`, `scorecard.md` "Rules the checker enforces"
+- **Slice:** 05
+- **What happens now:** the list was rewritten, but three rules on it still have no check. Probes, each passing: Errors "not scored" with the reason "didn't feel like it" (the list says Errors may be skipped "only when no failure path a person can reach exists"); a "not scored" row with Sample `7 of 10` (the list says put `-`); `Skipped: whatever` (the list implies skip counts from `size_report.py`). The obvious alternative either adds a check and test for each or moves them under a heading such as "Rules for the scorer".
+- **The gap:** the spec doesn't say whether the template or the script is the source of truth; check 2 asked for one list matched by tests.
+- **Reach:** 07's SKILL.md points at this list; an unattended run that skips Errors for any stated reason passes the gate.
+- **Verdict:** unsound. The heading still promises enforcement that doesn't exist. **Redo from:** each rule under "enforces" has a check and a test, and every check the script makes is on the list.
+- **Confidence:** medium
+
+### `--repo` accepts citations outside the repo and reversed line ranges
+
+- **When:** `8bf8fe7`, `check_scorecard.py` `citation_problems`
+- **Slice:** 05
+- **What happens now:** the user decided the checker verifies citations against the repo. It joins each cited path onto the repo folder and checks the file exists and the last line is in range. A citation `` `../outside.ts:2` `` passes when a file sits next to the repo, and `` `cli.ts:150-20` `` passes because only the end line is compared with the length (probes). The obvious alternative requires the resolved path to stay inside the repo and the start line to be no greater than the end line.
+- **The gap:** the user's call named the check, not what counts as "in the repo".
+- **Reach:** small in practice, but the user's trust test is checking a citation in under a minute, and a reversed range or an outside path can't be checked.
+- **Verdict:** unsound. A citation the user couldn't follow in the target repo passes the check meant to catch it. **Redo from:** a cited path resolves inside `--repo`, and a range has 1 <= start <= end <= file length.
+- **Confidence:** medium
+
+## sound
+
+### The previous scorecard is the newest date-named file that sorts before the current one, with same-day suffixes ordered by number
+
+- **When:** `a975445`, `delta.py` `previous_in`, `order_key`
+- **Slice:** 06
+- **What happens now:** with `--dir scorecards/ scorecards/2026-11-06-10.md`, the script picks `2026-11-06-2.md`, not `2026-11-06-9.md` by text order, and never the current file itself. Files not named `<YYYY-MM-DD>.md` or `<YYYY-MM-DD>-<n>.md` (such as `notes.md`) are ignored. A current file without such a name is refused, so 07 must write the scorecard under its final name before running `delta.py --dir`. The spec's literal reading, the newest file by name, would sort `-10` before `-2` and could pick the current file.
+- **The gap:** slice 06 says "the newest file in `scorecards/` by name", which doesn't cover same-day reruns past `-9` or the current file already being in the folder.
+- **Reach:** 07's step order is fixed by this: write, then delta, then check.
+- **Verdict:** sound. It keeps the spec's intent where the literal rule breaks.
+- **Confidence:** medium
+
+### The delta reports score changes and tier-label moves only; renames show as one file gone and one new
+
+- **When:** `a975445`, `delta.py` `delta`
+- **Slice:** 06
+- **What happens now:** a file growing from 610 to 790 lines stays "over target" and isn't mentioned. A file renamed from `a.ts` to `b.ts` shows as "New over 500: `b.ts`" and "Now under 500 or gone: `a.ts`" (probe). Changes in skip counts and in the commit are not reported. The alternatives would report line growth within a tier, or detect renames with git, which the script can't reach (it reads only two scorecards).
+- **The gap:** slice 06 asks which scores changed and which files moved tiers, and puts trends out of scope.
+- **Reach:** a skip-count change (the README's "misses are visible") would need a later slice.
+- **Verdict:** sound. It answers exactly the slice's question from the two files it is given.
+- **Confidence:** medium
+
+## Next step
+
+Make the three scripts agree on one valid scorecard (the checker owns it; `delta.py` and `size_report.py` defer to it), and rerun or mark the keen spike values, before 07 builds the skill on top of them.
