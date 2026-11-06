@@ -10,7 +10,7 @@
 
 **Decided:**
 - Tiers are the numbers locked in 01, for each commit and for the PR sum. Over-hard is still exit 0.
-- The PR sum is the new lines of the whole range diffed at once, not the sum of commit rows, because that counts what is new relative to the base: in #27 the commit rows sum to 447 new and the range to 476 (`spikes/pr27.md`). The output says which.
+- The PR sum is the new lines of the whole range diffed at once, not the sum of commit rows, because a block deleted in one commit and re-added in a later one is moved there, not new: in #27 the commit rows sum to 583 new and the range to 538 (`spikes/pr27.md`). The output says which.
 - Output is deterministic: no timestamps, no absolute paths.
 
 **Delegated to the worker:**

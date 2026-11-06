@@ -4,7 +4,7 @@
 Usage: pr27.py <brain-cli repo>   (writes the markdown table to stdout)
 
 Throwaway evidence, not product code. Runs git diff with --color-moved=zebra and
-pinned colours for each commit against its parent, under two whitespace settings,
+pinned colours for every commit from the merge-base with main to the branch head, each against its parent, plus the whole range, under two whitespace settings,
 excluding dist/ and specs/ by pathspec. An added line coloured as moved counts as
 moved; any other added line counts as new. Read-only.
 """
@@ -12,7 +12,7 @@ import re
 import subprocess
 import sys
 
-COMMITS = ["ea9b3ed", "9083e81", "adf8ed2", "138fb64", "fc3f4a6", "596eacd", "f6f554a"]
+BASE, HEAD = "7045e68", "f6f554a"  # merge-base with main, branch head
 NEW_MOVED = ("\x1b[1;35m", "\x1b[1;36m")  # bold magenta / bold cyan, pinned below
 PINNED = [
     "-c", "color.diff.new=green", "-c", "color.diff.old=red",
@@ -30,9 +30,18 @@ def count(repo, base, head, ws):
          base, head, "--", ".", ":!dist", ":!specs"],
         cwd=repo, capture_output=True, text=True, errors="replace", check=True).stdout
     new = moved = deleted = 0
+    in_hunk = False
     for line in out.splitlines():
         plain = ANSI.sub("", line)
-        if plain.startswith(("+++", "---")):
+        # File headers come before the first @@ of each file; only hunk lines count,
+        # so a content line that starts with "++" or "--" is never dropped.
+        if plain.startswith("diff --git"):
+            in_hunk = False
+            continue
+        if plain.startswith("@@"):
+            in_hunk = True
+            continue
+        if not in_hunk:
             continue
         if plain.startswith("+"):
             if any(code in line for code in NEW_MOVED):
@@ -52,8 +61,10 @@ def subject(repo, c):
 def main(repo):
     print("| Commit | Subject | Default: new / moved / del | Indent-insensitive: new / moved / del | Moved share (indent-insensitive) |")
     print("|---|---|---|---|---|")
-    rows = [(c, f"{c}~1", c, subject(repo, c)) for c in COMMITS]
-    rows.append(("whole PR", f"{COMMITS[0]}~1", COMMITS[-1], "range diffed at once"))
+    commits = subprocess.run(["git", "rev-list", "--reverse", "--abbrev-commit", f"{BASE}..{HEAD}"],
+                             cwd=repo, capture_output=True, text=True, check=True).stdout.split()
+    rows = [(c, f"{c}~1", c, subject(repo, c)) for c in commits]
+    rows.append(("whole PR", BASE, HEAD, f"{BASE}..{HEAD} diffed at once"))
     for label, base, head, subj in rows:
         a = count(repo, base, head, SETTINGS["default"])
         b = count(repo, base, head, SETTINGS["allow-indentation-change"])
