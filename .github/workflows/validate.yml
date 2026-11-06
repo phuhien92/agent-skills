@@ -15,4 +15,5 @@ jobs:
           python-version: "3.12"
       - run: python3 tools/validate.py
       - run: python3 -m unittest discover -s skills/codebase-rubric/scripts
+      - run: python3 -m unittest discover -s skills/slice-spec/scripts
       - run: python3 -m unittest discover -s tools

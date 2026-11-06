@@ -18,12 +18,16 @@ This pack does not build the factory. It ships the **blocks** a factory calls at
 | Station | Block | Status |
 |---|---|---|
 | Intent | `think-with-me`, `brain` | have |
-| Map, Slice | `slice-spec` | have; writes the spec that Build and Decide read |
+| Map, Slice | `slice-spec` | have; writes the spec that Build and Decide read, and sizes each slice and PR with `scripts/diff_size.py` |
 | Build | the harness's own workers | not ours |
 | Verify | `codebase-rubric`, plus the "agents check before the human reviews" rule in `AGENTS.md` | have; a periodic scorecard, not a per-change gate |
 | Decide | `decision-checker` | have; first block that runs as a gate |
 | Learn | `brain` stores lessons | half: nothing feeds them back yet |
 | (the human) | `behavioral-story-depth`, `radio-system-design-practice` | have; human-facing on purpose |
+
+### Size before review
+
+Before an agent opens a PR, it runs `python3 <slice-spec>/scripts/diff_size.py . <base>..HEAD`, with `<base>` the remote branch the PR targets (such as `origin/main`; a stale local `main` inflates the count), and pastes the table into the PR description. It counts new product-code lines, with moved code reported apart, against target 400, soft 800, hard 1,500, for each commit and for the whole branch. Over soft, a commit gets "consider Reslice" and the branch gets "split the goal". It warns and never blocks: one gate per task stays `decision-checker`.
 
 ### How a block joins a harness
 
