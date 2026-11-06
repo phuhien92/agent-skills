@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="assets/hero.svg" alt="agent-skills: AI skills that make you sharper, not just faster. Cleared practice rounds for recall, stories, design, and thinking, with the probes you haven't heard yet still open." width="100%">
+  <img src="assets/hero.svg" alt="agent-skills: Agent skill blocks for software factories. Cleared practice rounds for recall, stories, design, and thinking, with the probes you haven't heard yet still open." width="100%">
 </p>
 
 # Agent Skills
 
-**AI skills that make you sharper, not just faster.** Built for interview prep and hard thinking, not for shipping answers faster. Each skill is a folder with a slash command, and runs in Claude Code, Cursor, or any agent that reads `SKILL.md`.
+**Agent skill blocks for software factories.** Factories automate the build. These blocks train the part that stays human: recalling the real facts, thinking a problem through, and defending a decision under follow-up. Each skill is a folder with a slash command, and runs in Claude Code, Cursor, or any agent that reads `SKILL.md`.
 
 ```bash
 npx skills add phuhien92/agent-skills
@@ -14,7 +14,7 @@ npx skills add phuhien92/agent-skills
 
 ## Why
 
-AI makes it easy to produce a good answer fast. Interviews and real work test something else: whether the answer holds up on the second follow-up. "What did *you* do?" "What else did you consider?" "How did you know it worked?" A polished answer with nothing underneath falls apart right there.
+A software factory makes output cheap. Someone still has to set the intent and judge the result. That person gets tested the same way in interviews and in real work: does the answer hold up on the second follow-up? "What did *you* do?" "What else did you consider?" "How did you know it worked?" A polished answer with nothing underneath falls apart right there.
 
 The practice skills work the other way around. They start at the second follow-up. They probe one question at a time, hold you to what you answered, and only then move on. Nothing gets invented along the way. A missing metric or name becomes a question for you, never a placeholder that reads like the truth.
 
