@@ -68,6 +68,14 @@ class DeltaTest(unittest.TestCase):
         with self.assertRaises(ContractError):
             delta.delta(broken, CUR)
 
+    def test_invalid_scorecards_refused(self) -> None:
+        bad_tier = PREV.replace("| 950 | over soft (800) |", "| 950 | huge |")
+        with self.assertRaises(ContractError):
+            delta.delta(bad_tier, CUR)
+        missing_row = "\n".join(l for l in CUR.splitlines() if not l.startswith("| Components |"))
+        with self.assertRaises(ContractError):
+            delta.delta(PREV, missing_row)
+
     def test_previous_in_dir(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             folder = Path(d)

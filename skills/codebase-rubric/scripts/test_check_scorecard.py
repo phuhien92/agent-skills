@@ -48,7 +48,7 @@ class CheckScorecardTest(unittest.TestCase):
         self.assertEqual(problems(ok), [])
         bad = ok.replace("| 1200 | over hard (1000) |", "| 700 | over hard (1000) |")
         self.assertTrue(any("src/big.ts has 700 lines" in p for p in problems(bad)))
-        no_skip = GOOD.replace("Skipped: generated header: 4, lockfile: 2, not a code file: 61\n", "")
+        no_skip = GOOD.replace("Skipped: generated header: 6, lockfile: 2, not a code file: 57\n", "")
         self.assertTrue(any("Skipped:" in p for p in problems(no_skip)))
 
     def test_missing_trace(self) -> None:
@@ -98,6 +98,10 @@ class CheckScorecardTest(unittest.TestCase):
             (repo / "tools/token-generator/src/cli.ts").write_text("x\n" * 10)
             found = problems(GOOD, repo)
             self.assertTrue(any("cli.ts:16` is past the end (10 lines)" in p for p in found))
+            outside = GOOD.replace("`tools/token-generator/src/gates.ts:168`", "`../gates.ts:2`")
+            self.assertTrue(any("points outside" in p for p in problems(outside, repo)))
+            backwards = GOOD.replace("`tools/token-generator/src/pipeline.ts:81-108`", "`tools/token-generator/src/pipeline.ts:108-81`")
+            self.assertTrue(any("runs backwards" in p for p in problems(backwards, repo)))
             (repo / "tools/token-generator/src/gates.ts").unlink()
             self.assertTrue(any("gates.ts` is not a file" in p for p in problems(GOOD, repo)))
 

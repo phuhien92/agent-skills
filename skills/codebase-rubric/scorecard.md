@@ -8,10 +8,12 @@ Rules the checker enforces:
 - **Scores** has exactly five rows, one per area, in this order: Architecture, Modularity, Abstraction, Components, Errors.
 - **Size** rows have a whole-number Lines value and a Tier of `over target (500)`, `over soft (800)`, or `over hard (1000)` that matches it. The `Skipped:` line sits inside the size markers.
 - A **numeric score** is 1 to 5, names a Scope, has a Sample of the form `N of M` with 1 ≤ N ≤ M, and its Evidence holds at least one `` `path:line` `` or `` `path:start-end` ``.
-- **Not scored** needs a Scope and a reason in Evidence. Put `-` in Sample.
-- **At least three areas** are scored. Errors may be "not scored" only when no failure path a person can reach exists.
+- **Not scored** needs a Scope and a reason in Evidence.
+- **At least three areas** are scored.
 - **Error trace** has at least two hops, each starting with `` `path:line` ``, unless Errors is not scored.
-- **With `--repo`**, every cited file exists and every cited line is within the file. The skill always passes `--repo`.
+- **With `--repo`**, every cited file is inside the repo and exists, every cited line is within the file, and ranges run forward. The skill always passes `--repo`.
+
+Your job, not the checker's: mark Errors "not scored" only when no failure path a person can reach exists; put `-` in Sample for a "not scored" area; make each score's evidence actually support it.
 
 ````markdown
 # Codebase scorecard: <repo name>

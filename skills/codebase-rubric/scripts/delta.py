@@ -8,8 +8,8 @@ Usage:
 With --dir, the previous scorecard is the newest one in that folder that sorts
 before <current.md> (names are <YYYY-MM-DD>.md or <YYYY-MM-DD>-<n>.md). With no
 previous scorecard, prints "First run." Prints markdown for the scorecard's
-delta section. Exits 1 with a reason if either file breaks the contract (for
-example, a marker was edited away), 2 on bad usage. Never guesses.
+delta section. Both scorecards must pass check_scorecard.py first; if either
+doesn't, exits 1 with the checker's reasons. Exits 2 on bad usage. Never guesses.
 Standard library only.
 """
 from __future__ import annotations
@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from check_scorecard import AREAS, ContractError, parse  # noqa: E402
+from check_scorecard import AREAS, ContractError, parse, problems  # noqa: E402
 
 NAME = re.compile(r"^(\d{4}-\d{2}-\d{2})(?:-(\d+))?\.md$")
 
@@ -38,11 +38,18 @@ def previous_in(folder: Path, current: Path) -> Path | None:
     return max(older)[1] if older else None
 
 
+def require_valid(text: str, which: str) -> None:
+    found = problems(text)
+    if found:
+        raise ContractError(f"{which} scorecard is not valid: " + "; ".join(found))
+
+
 def delta(prev_text: str | None, cur_text: str) -> str:
-    cur = parse(cur_text)
+    require_valid(cur_text, "current")
     if prev_text is None:
         return "First run."
-    prev = parse(prev_text)
+    require_valid(prev_text, "previous")
+    cur, prev = parse(cur_text), parse(prev_text)
     lines = [f"Since {prev['meta'].get('Date', '?')} (`{prev['meta'].get('Commit', '?')}`):", ""]
 
     before = {r.get("area"): r.get("score", "").strip() for r in prev["scores"]}

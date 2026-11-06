@@ -99,6 +99,13 @@ class SizeReportTest(unittest.TestCase):
         self.assertEqual(res.returncode, 2)
         self.assertIn(b"is not a directory", res.stderr)
 
+    def test_no_placeholder_row(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "small.py").write_text(lines(10))
+            text = size_report.as_text(size_report.report(Path(d)))
+            self.assertEqual(text.splitlines()[:2], ["| File | Lines | Tier |", "|---|---|---|"])
+            self.assertNotIn("none over", text)
+
     def test_works_without_git(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             (Path(d) / "big.py").write_text(lines(600))

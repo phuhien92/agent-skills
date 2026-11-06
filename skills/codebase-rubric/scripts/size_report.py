@@ -180,8 +180,6 @@ LABEL = {"hard": f"over hard ({HARD})", "soft": f"over soft ({SOFT})", "target":
 def as_text(data: dict) -> str:
     out = ["| File | Lines | Tier |", "|---|---|---|"]
     out += [f"| `{r['path']}` | {r['lines']} | {LABEL[r['tier']]} |" for r in data["files"]]
-    if not data["files"]:
-        out.append(f"| (none over {TARGET}) | | |")
     out.append("")
     skipped = ", ".join(f"{SKIP_LABELS[k]}: {v}" for k, v in data["skipped"].items()) or "none"
     out.append(f"Skipped: {skipped}")

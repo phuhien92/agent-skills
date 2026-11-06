@@ -18,7 +18,7 @@ Fixture built from `specs/codebase-rubric/spikes/03c-per-area-keen.md`.
 | File | Lines | Tier |
 |---|---|---|
 
-Skipped: generated header: 4, lockfile: 2, not a code file: 61
+Skipped: generated header: 6, lockfile: 2, not a code file: 57
 <!-- size:end -->
 
 ## Scores

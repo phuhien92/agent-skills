@@ -72,7 +72,15 @@ def citation_problems(text: str, repo: Path) -> list[str]:
         if (path, start, end) in seen:
             continue
         seen.add((path, start, end))
-        target = repo / path
+        if end and int(end) < int(start):
+            found.append(f"citation: `{path}:{start}-{end}` runs backwards")
+            continue
+        target = (repo / path).resolve()
+        try:
+            target.relative_to(repo.resolve())
+        except ValueError:
+            found.append(f"citation: `{path}` points outside {repo}")
+            continue
         if not target.is_file():
             found.append(f"citation: `{path}` is not a file in {repo}")
             continue
