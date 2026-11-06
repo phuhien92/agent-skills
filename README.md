@@ -4,7 +4,7 @@
 
 # Agent Skills
 
-**Agent skill blocks for software factories.** Factories automate the build. These blocks train the part that stays human: recalling the real facts, thinking a problem through, and defending a decision under follow-up. Each skill is a folder with a slash command, and runs in Claude Code, Cursor, or any agent that reads `SKILL.md`.
+**Agent skill blocks for software factories.** Factories automate the build. These blocks train the part that stays human: recalling the real facts, thinking a problem through, defending a decision under follow-up, and checking what the agents decided for you. Each skill is a folder with a slash command, and runs in Claude Code, Cursor, or any agent that reads `SKILL.md`.
 
 ```bash
 npx skills add phuhien92/agent-skills
@@ -38,6 +38,7 @@ Your time goes into the facts in step 1 and the answers in steps 2 to 4. The ski
 - **Think a problem through.** `/hien` loads my tools, opinions, and voice, then helps you think and build the way I would.
 - **"Did I already decide this?"** `/brain` searches your notes before the agent answers from general knowledge.
 - **One story keeps collapsing.** `/behavioral-story-depth` in Drill mode on just that story.
+- **An agent just finished a change.** `/decision-checker` lists the calls it made where your prompt was silent, least confident first. Review that instead of the diff.
 
 ## Quick start
 
@@ -56,6 +57,7 @@ Your time goes into the facts in step 1 and the answers in steps 2 to 4. The ski
 npx skills add phuhien92/agent-skills --skill hien
 npx skills add phuhien92/agent-skills --skill radio-system-design-practice
 npx skills add phuhien92/agent-skills --skill behavioral-story-depth
+npx skills add phuhien92/agent-skills --skill decision-checker
 npx skills add phuhien92/agent-skills --skill brain   # needs the brain CLI: npm install -g github:phuhien92/brain-cli
 ```
 
@@ -67,6 +69,12 @@ npx skills add phuhien92/agent-skills --skill brain   # needs the brain CLI: npm
 |---|---|---|
 | [behavioral-story-depth](skills/behavioral-story-depth/SKILL.md) | Turns a real story into a 75 to 90 second opener plus a deep Actions layer that survives about five minutes of probing. Maps stories to Amazon LPs and drills follow-ups. | "Tell me about a time…" prep, Amazon LP loops, a story that collapses on follow-up |
 | [radio-system-design-practice](skills/radio-system-design-practice/SKILL.md) | Coaches RADIO (Requirements, Architecture, Data model, Interfaces, Optimizations). Hidden rubric, one question, score, lock, next. | System design practice, news feed / autocomplete / docs / chat, `@solution.md` or an Excalidraw board |
+
+### Build: check what the factory decided
+
+| Skill | What it does | Use when |
+|---|---|---|
+| [decision-checker](skills/decision-checker/SKILL.md) | Lists every decision an agent made where the prompt or spec was silent, with a verdict and a confidence, least confident first. Changes no code. Drill mode quizzes you on the shakiest calls. | Before merging AI-written work, a diff too big to read, a fix that "works" but may only cover one case |
 
 ### Think and recall: start from what you know
 
@@ -91,9 +99,12 @@ agent-skills/
 │   ├── radio-system-design-practice/
 │   │   ├── SKILL.md
 │   │   └── examples.md
-│   └── behavioral-story-depth/
+│   ├── behavioral-story-depth/
+│   │   ├── SKILL.md
+│   │   └── probes.md
+│   └── decision-checker/
 │       ├── SKILL.md
-│       └── probes.md
+│       └── ledger.md
 ├── .claude/commands/          # Claude Code slash commands
 ├── .cursor/skills/            # Cursor: symlink to skills/
 ├── commands/                  # Extra slash-command copies

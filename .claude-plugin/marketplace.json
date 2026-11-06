@@ -8,7 +8,7 @@
     {
       "name": "agent-skills",
       "source": "./",
-      "description": "Agent skill blocks: /hien, /brain, /behavioral-story-depth, and /radio-system-design-practice."
+      "description": "Agent skill blocks: /hien, /brain, /behavioral-story-depth, /radio-system-design-practice, and /decision-checker."
     }
   ]
 }
