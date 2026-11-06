@@ -20,6 +20,10 @@ specs/<feature>/
 
 **Branch:** <the branch this spec is built on, so decision-checker can find it>
 
+**Base:** <the remote branch the PR merges into, such as `origin/main`>
+
+**Size:** after each slice commit, run `python3 <real path to slice-spec>/scripts/diff_size.py . <Base>..HEAD`. Its last row is this slice; its whole-range row is the PR so far.
+
 ## Intent
 
 > <The user's own words, quoted. Add context only where a reader needs it.>
@@ -74,7 +78,7 @@ When the intent was inferred (no user present), say so on the first line under *
 
 **Must stay green:** <existing tests or behavior this slice must not break>
 
-**Size:** after the slice commit, run `python3 <slice-spec>/scripts/diff_size.py . HEAD~1..HEAD`. Over soft (800 new lines), say so in the handback and suggest Reslice.
+**Size:** run the README's Size command after the slice commit. If this slice's row or the whole range is over soft (800 new lines), say so in the handback and suggest Reslice or a follow-up PR.
 
 **Decided:**
 - <choices already made for the worker, with the reason>

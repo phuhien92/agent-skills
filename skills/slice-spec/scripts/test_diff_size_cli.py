@@ -134,7 +134,7 @@ class CliTest(unittest.TestCase):
             self.repo.run("clone", "-q", "--depth", "1", f"file://{self.repo.root}", clone)
             code, out, _ = run(clone, "HEAD", "--json")
             row = json.loads(out)["commits"][0]
-            self.assertEqual((code, row["parent_missing"]), (0, True))
+            self.assertEqual((code, row["parent_missing"], row["tier"]), (0, True, None))
             self.assertIn("shallow clone", run(clone, "HEAD")[1])
 
     def test_bad_input_exits_2(self):

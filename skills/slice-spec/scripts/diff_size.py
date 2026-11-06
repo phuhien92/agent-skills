@@ -635,8 +635,11 @@ def report(repo: Path, rev_range: str) -> dict:
     rows = []
     for sha in commits:
         files, filtered = count_product(repo, parent(repo, sha), sha)
-        rows.append({"commit": sha[:7], "subject": subject(repo, sha), **summarise(files, filtered),
-                     "parent_missing": sha in shallow})
+        row = {"commit": sha[:7], "subject": subject(repo, sha), **summarise(files, filtered),
+               "parent_missing": sha in shallow}
+        if row["parent_missing"]:
+            row["tier"] = None  # the count is the whole tree, so a tier would mislead
+        rows.append(row)
     total, base_note = None, None
     if ".." in rev_range:
         a, _, b = rev_range.partition("..")

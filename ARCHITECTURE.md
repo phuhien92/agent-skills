@@ -27,7 +27,7 @@ This pack does not build the factory. It ships the **blocks** a factory calls at
 
 ### Size before review
 
-Before an agent opens a PR, it runs `python3 skills/slice-spec/scripts/diff_size.py . <base>..HEAD` and pastes the table into the PR description. It counts new product-code lines, with moved code reported apart, against target 400, soft 800, hard 1,500, for each commit and for the whole branch. Over soft, a commit gets "consider Reslice" and the branch gets "split the goal". It warns and never blocks: one gate per task stays `decision-checker`.
+Before an agent opens a PR, it runs `python3 <slice-spec>/scripts/diff_size.py . <base>..HEAD`, with `<base>` the remote branch the PR targets (such as `origin/main`; a stale local `main` inflates the count), and pastes the table into the PR description. It counts new product-code lines, with moved code reported apart, against target 400, soft 800, hard 1,500, for each commit and for the whole branch. Over soft, a commit gets "consider Reslice" and the branch gets "split the goal". It warns and never blocks: one gate per task stays `decision-checker`.
 
 ### How a block joins a harness
 

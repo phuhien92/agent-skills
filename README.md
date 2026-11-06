@@ -39,7 +39,7 @@ Your time goes into the facts in step 1 and the answers in steps 2 to 4. The ski
 - **"Did I already decide this?"** `/brain` searches your notes before the agent answers from general knowledge.
 - **One story keeps collapsing.** `/behavioral-story-depth` in Drill mode on just that story.
 - **A feature is too big to hand over.** `/slice-spec` interviews you, then writes a spec of small slices with a pass/fail check each. Agents build from it; `/decision-checker` audits against it.
-- **A PR is too big to review.** `skills/slice-spec/scripts/diff_size.py . main..HEAD` counts new lines per commit and for the branch, with moved code apart. Paste its table into the PR description; over 800 new lines, split the goal.
+- **A PR is too big to review.** `python3 <slice-spec>/scripts/diff_size.py . origin/main..HEAD` (from wherever the skill is installed; `skills/slice-spec/` in this repo) counts new lines per commit and for the branch, with moved code apart. Paste its table into the PR description; over 800 new lines, split the goal.
 - **Is this codebase getting better or worse?** `/codebase-rubric` writes a dated scorecard with evidence you can check in under a minute, and shows what changed since the last one.
 - **An agent just finished a change.** `/decision-checker` lists the calls it made where your prompt was silent, least confident first. Review that instead of the diff.
 

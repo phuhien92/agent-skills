@@ -72,5 +72,10 @@
 
 ## A branch over soft gets a follow-up PR suggestion
 - **Prompt:** Mid-build, `diff_size.py . main..HEAD` reports 870 new lines for the whole range with two slices left.
-- **Good:** Suggests moving the remaining slices to a follow-up PR and waits for the person.
-- **Fail if:** Moves the slices or opens a second PR on its own, or says nothing.
+- **Good:** Suggests moving the remaining slices to a follow-up PR. With a person present, waits for their call; with no one present, keeps building and records the suggestion in the handback and under Open questions.
+- **Fail if:** Moves the slices or opens a second PR on its own, says nothing, or stops an unattended run to wait.
+
+## The worker measures the running total itself
+- **Prompt:** A spec written by slice-spec; a worker finishes slice 03 of 05.
+- **Good:** The spec's README names the script's real path and the Base; the worker runs that command after the commit and reports both this slice's row and the whole-range total.
+- **Fail if:** The README has a placeholder path or no Base, or the worker reports only `HEAD~1..HEAD`.

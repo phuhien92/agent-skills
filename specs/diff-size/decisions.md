@@ -481,3 +481,113 @@ Make the whole-range row start at the merge base, with a test where `main` moves
 # User decision at the slice 04 spot-check (2026-11-06)
 
 - **Spot-check accepted:** the user accepted 177 new lines for brain-cli `138fb64` (slice 05) after seeing the per-file breakdown: the router fix in `src/cli.ts` (35), each new command file's imports, handler signature and context unpacking (132 across 11 files), `golden.sh` (6) and `shared.ts` (4).
+
+# Check 5: slice 05 wiring
+
+- **Scope:** commit `a5e887c` on `claude/diff-size`: `skills/slice-spec/SKILL.md`, `skills/slice-spec/spec-format.md`, `ARCHITECTURE.md`, `README.md`, `evals/slice-spec.md`, `.github/workflows/validate.yml`, and the spec status. Also, briefly, whether `888f620` (the slice 04 fixes) resolves Check 4.
+- **Baseline:** `specs/diff-size/README.md` (including the user's later rule in Constraints: "If a PR is too large, we should break down the goal into multiple subtasks to reduce the PR size"), `slices/05-wiring.md`, and the user decisions above. Run by another workflow with no user present (rule 7): every confidence is capped at medium. Earlier entries the code did not change are not relisted.
+- **Self-report:** missing beyond the commit message and the README prompt, so this ledger rests on an independent trace and read-only runs of the script.
+- **Tests:** `python3 tools/validate.py` passes (7 skills, 0 errors). codebase-rubric 36, slice-spec 47 and `tools/` 5 tests pass on Python 3.13, and the two new suites also pass on 3.12 (CI's version). The CI steps discover every `test_*.py` in the repo (7 files). git 2.43. The slice's grep checks pass, except that `grep -n "crossed soft"` matches one line, not two: both phrases sit on one line (wording of the check, not a defect).
+- **Context, not a finding:** against `origin/main` this branch measures 1,485 new lines for the whole range, over its own soft limit of 800. Whether to split it is the user's call and is being raised separately.
+
+## Check 4's fixes (`888f620`)
+
+The whole-range row now starts at the merge base, with a test where `main` moves after the branch point. Warnings and notes are separate blocks, and `|` in a subject becomes `&#124;`, with a test that counts the row's pipes. Both are resolved. The shallow-clone entry is only partly resolved: see the unsound entry below. Check 4's "Deleted" note was added with the recommended wording. Its merge-row entry is unchanged and still waits on the user; a real run now shows it (see the `main..HEAD` entry).
+
+## Check these first
+
+1. In an unattended run, a branch over soft makes the worker wait.
+2. The worker can't find the script from an installed skill.
+3. Nothing measures the branch's running total mid-build.
+
+## Needs you
+
+### In an unattended run, a branch over soft makes the worker wait
+
+- **When:** `a5e887c`, `evals/slice-spec.md` ("A branch over soft gets a follow-up PR suggestion") and `SKILL.md` Reslice step 1.
+- **Slice:** 05
+- **What happens now:** a harness builds slices with no person present. Partway through, the branch crosses 800 new lines. The eval's "Good" says the worker "suggests moving the remaining slices to a follow-up PR and waits for the person", and Reslice says "the person decides". With nobody there, the run stalls. The eval doesn't fail a worker that blocks; it fails only one that moves slices or says nothing. The obvious alternative keeps building on the same branch, records the suggestion in the handback and the next-agent prompt, and lets the person split at review. That is what `slice-spec`'s "never block a run" rule and its "short window, then decide and record why" rule point to.
+- **The gap:** the spec says a person decides a split, and that the tool never blocks. It doesn't say what a worker does with no person present.
+- **Reach:** every unattended build that crosses soft, which is the case the user's "break down the goal" rule exists for.
+- **Verdict:** needs-you. Whether to keep building or stop is a product call. **Recommended call:** never wait. Keep building, put the follow-up-PR suggestion in the handback and the next-agent prompt, and change the eval's "Good" to "records the suggestion and keeps going" and its "Fail if" to add "stops the run". **To reverse:** keep "waits for the person" and say in `SKILL.md` that a size suggestion is the one place a run stops.
+- **Confidence:** low.
+
+## Unsound
+
+### The worker can't find the script from an installed skill
+
+- **When:** `a5e887c`, the slice template's **Size** line in `spec-format.md`, plus `ARCHITECTURE.md` "Size before review" and the README's "A PR is too big to review".
+- **Slice:** 05
+- **What happens now:** a user installs `slice-spec` with `npx skills add` or the plugin, plans a feature in their own repo, and a worker builds a slice there. The slice file says `python3 <slice-spec>/scripts/diff_size.py . HEAD~1..HEAD`. `spec-format.md` never says what `<slice-spec>` stands for, so the planner either copies it as is or guesses. The worker reads only the spec (step 6 says so), so it has no way to resolve it. The README and `ARCHITECTURE.md` say `skills/slice-spec/scripts/diff_size.py . main..HEAD`, which exists only inside an agent-skills checkout, while `.` is the user's repo. `SKILL.md`'s `scripts/diff_size.py` works for the planner, which knows its own folder, but the planner never runs it. The obvious alternative has the planner write the script's real path (its own skill folder) into the spec, and the docs say the path is relative to the installed skill.
+- **The gap:** the slice said "the script is listed so the skill can find it" but not how a worker outside this repo finds it. Skills install one at a time, in folders that differ per harness.
+- **Reach:** every per-slice size check and every PR table outside this repo. When the command fails, the size check silently doesn't happen.
+- **Verdict:** unsound. The wired command can't run where the skill is used. **Redo from:** every place that tells a worker to run `diff_size.py` gives a path that resolves from the worker's repo in any install: the planner writes its resolved skill path into the spec, and the README and `ARCHITECTURE.md` say the path is the installed skill's `scripts/` folder.
+- **Confidence:** low.
+
+### Nothing measures the branch's running total mid-build
+
+- **When:** `a5e887c`, `SKILL.md` Reslice step 1, the slice template's **Size** line, and the third new eval.
+- **Slice:** 05
+- **What happens now:** after each slice, the worker runs `diff_size.py . HEAD~1..HEAD`. One commit gives no whole-range row, so it never sees the branch total. The branch range is run only "before an agent opens a PR" (`ARCHITECTURE.md`). So Reslice's "a branch's running total crossed soft" trigger has no step that produces it, and a branch first learns it is over soft when the PR is ready, too late to move slices out. The eval hands the worker the 870 in its prompt, so it passes without testing that any worker would ever compute it. The obvious alternative adds the branch range (`<base>..HEAD`) to the slice's **Size** line, so the running total is seen after every slice.
+- **The gap:** the spec's Constraints say "when a branch's running total crosses soft, `slice-spec` suggests Reslice", and slice 05 wired the per-slice command only.
+- **Reach:** the mid-build half of the user's "break down the goal" rule doesn't fire.
+- **Verdict:** unsound. A decided trigger has no producer, and its eval can't fail on that. **Redo from:** after every slice, the worker sees both the slice's size and the branch's running total, and the eval's prompt makes the worker run the measure rather than giving it the number.
+- **Confidence:** medium.
+
+### `main..HEAD` sizes everything a stale local `main` is missing
+
+- **When:** `a5e887c`, the README's "A PR is too big to review" (`diff_size.py . main..HEAD`) and the third eval's prompt.
+- **Slice:** 05
+- **What happens now:** on this branch, local `main` is behind `origin/main`. `diff_size.py . main..claude/diff-size` lists the already-merged PRs #5 and #8, gives a merge row of 926 new ("over soft: consider Reslice"), and a whole range of 2,499 new, "over hard". Against `origin/main` the same branch is 1,485. The table a worker pastes into the PR would be wrong by about 1,000 lines and would tell the reviewer to reslice someone else's merged work. The obvious alternative names the base as the branch the PR targets, freshly fetched (`git fetch` then `origin/main..HEAD`), as `ARCHITECTURE.md`'s `<base>..HEAD` leaves open.
+- **The gap:** the spec says the table goes into the PR description but not which ref stands for the PR's base.
+- **Reach:** any worker whose local `main` isn't current, which is the usual case in a worktree or a long-lived clone.
+- **Verdict:** unsound. The pasted PR total stops measuring the PR. **Redo from:** every documented PR command sizes from the PR's target branch as the remote has it now, so the table matches what GitHub shows.
+- **Confidence:** medium.
+
+### A shallow-clone row is flagged but still tiered
+
+- **When:** `888f620`, `report()` sets `parent_missing` and `warnings()` adds a note; the row still gets a tier.
+- **Slice:** 04 (Check 4's redo)
+- **What happens now:** in a `--depth 1` clone, `diff_size.py . HEAD` sizes the cut-off commit against the empty tree, exits 0, and adds "has no parent in this shallow clone". The row keeps its tier, so a 2,000-line file gives "over hard: reslice before review" next to a note saying the number is wrong. With `main..HEAD` and no shared history, the whole range is sized from an empty tree and can still say "split the goal". Check 4's redo said to exit 2 and name the commit. The fix chose warn-and-continue without saying why. That fits "never blocks", but it still tiers a number the tool knows is wrong.
+- **The gap:** Check 4 said what must hold; the fix changed how it holds without recording the trade.
+- **Reach:** CI checkouts are shallow by default, and slice 05 points workers and CI at this output.
+- **Verdict:** unsound. A known-wrong number still drives a tier and a split warning. **Redo from:** a row or whole range sized against a missing parent or base carries no tier and no size warning (or the run exits 2 naming it), and a test checks the shallow case for both.
+- **Confidence:** medium.
+
+## Sound
+
+### The planner sizes each slice and the whole plan, and the slice graph gains a PR column
+
+- **When:** `a5e887c`, `SKILL.md` Interview step 4 "Size the plan", and the slice graph in `spec-format.md`.
+- **Slice:** 05
+- **What happens now:** after the slice test, the planner estimates each slice's new lines. A slice over 800 is split. Slices over 800 in total become sub-goals, one PR each, every one shippable and leaving `main` working, and the graph's **PR** column puts each slice in exactly one PR. The per-slice split at 800 goes past the spec's text, which named only the total, but it matches the per-commit soft tier ("consider Reslice"). The planner still writes only under `specs/`, asks nothing new, and needs no answer to proceed, so the non-negotiables hold.
+- **The gap:** the spec named the total threshold only.
+- **Reach:** every new spec has a PR column.
+- **Verdict:** sound.
+- **Confidence:** medium.
+
+### Evals 1 and 2 test the planning split and the per-slice suggestion
+
+- **When:** `a5e887c`, `evals/slice-spec.md`.
+- **Slice:** 05
+- **What happens now:** eval 1 gives drafted slices of about 1,400 new lines and fails if one PR holds every slice or the PR column is missing. Eval 2 has a slice at 950 new and fails if the size goes unmentioned or the spec changes before the person decides. Both match the spec's cases. Eval 3 is covered by the needs-you and running-total entries above.
+- **The gap:** case text was delegated to the worker.
+- **Reach:** future edits to `slice-spec` are graded against them.
+- **Verdict:** sound.
+- **Confidence:** medium.
+
+### CI runs the slice-spec and `tools/` tests as two new steps
+
+- **When:** `a5e887c`, `.github/workflows/validate.yml`.
+- **Slice:** 05
+- **What happens now:** CI runs `unittest discover` on `skills/slice-spec/scripts` and on `tools`. Between them and the existing codebase-rubric step, all seven `test_*.py` files in the repo run. The tests build their own temp repos with a fixed git identity, so CI's shallow checkout and missing git config don't matter. The slice's "one `tools/` step, not two" rule for PR #9 is in the spec, not the workflow, so it is a merge-time note.
+- **The gap:** none beyond the slice's list.
+- **Reach:** a drifted copy of the skip rules or a broken `diff_size.py` fails CI.
+- **Verdict:** sound.
+- **Confidence:** medium.
+
+Trivial calls folded: the "Size before review" heading placed under the station table rather than a loop section, the README tree comment, and `HEAD~1..HEAD` for one slice commit (decided in the slice) (3).
+
+## Next step
+
+Three of the five open entries are about where and when the script runs (installed path, base ref, running total). Send that part back through the spec: settle one documented command a worker runs after every slice (resolved script path, fetched target branch, slice plus branch total) and what an unattended worker does over soft, then fix the wiring and the shallow-row tier in one pass.

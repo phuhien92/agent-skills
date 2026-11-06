@@ -2,6 +2,10 @@
 
 **Branch:** `claude/diff-size`
 
+**Base:** `origin/main`
+
+**Size:** `python3 skills/slice-spec/scripts/diff_size.py . origin/main..HEAD`
+
 ## Intent
 
 > do we also have rules to keep PR code changes limit
@@ -57,6 +61,6 @@ Settled at the slice 01 gate (see `decisions.md`): always ignore indentation cha
 
 ## Next agent prompt
 
-Status: all five slices built. The user accepted the slice 04 spot-check (177 new for `138fb64`). Slice 05 wired the script into `slice-spec` (plan sizing, the PR column, the Size line, the Reslice triggers), `ARCHITECTURE.md` and the README (paste the table into the PR description), three new evals, and CI. Next: decision-checker on slice 05, then one PR.
+Status: all five slices built and checked (Checks 1–5), with Check 5's fixes in: one documented Size command per spec (real path, Base, running total), unattended runs never wait on a size suggestion, and shallow-clone rows get no tier. The branch measured 1,485 new lines, over soft, so the user split it into three stacked PRs: #10 (to `0945449`), #11 (to `57d7830`), and PR 3/3 from this branch.
 
 Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.
