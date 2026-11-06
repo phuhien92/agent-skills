@@ -61,10 +61,11 @@ Build order comes from **Depends on**. 01 and 04 can start in parallel; 02 and 0
 - **Tie rule reworded, approved by the user:** "pick the lower anchor; a 4 needs the 5 anchor to fit most of the repo, a 2 needs the 1 anchor to fit most of it."
 - **Second repo for separation, approved by the user: [phuhien92/keen-design-system](https://github.com/phuhien92/keen-design-system).** A component library with no code file over 500 lines, the opposite shape of brain-cli. If it also scores all 3s, sharpen the anchors before 07.
 - **One fresh scorer per area, approved by the user.** The keen-design-system check scored all five areas 4, and brain-cli scored four 3s: each scorer carried one impression across every area. A scorer that sees only its own area can't. The rubric also gains "not scored" (too little code, with scope named) and "most" as at least two-thirds of a listed sample. Costs about five scorers per run, acceptable for a periodic check.
+- **Slices 02 and 03 accepted by the user** on the evidence (2026-11-06) without a hand re-check: the trace was spot-checked hop by hop by the planner, and two scoring citations were confirmed.
 - **Target repo: [phuhien92/brain-cli](https://github.com/phuhien92/brain-cli) at `7045e68`** (user's choice). It has three source files over 500 lines (`src/cli.ts` 1,692, `test/extensions.test.ts` 997, `src/extensions.ts` 540) and two files the skip rules must catch (`dist/src/cli.js` 1,579, a PNG under `assets/`). The session clone is read-only, so scorecards stay local.
 
 ## Next agent prompt
 
-Status: 01 approved (tie rule reworded); 04 built. 02 and 03 ran on brain-cli (outputs in `spikes/`), waiting for the user's checks. Per-area scorers on keen-design-system gave 4, 4, 3, 4, 3 where one scorer gave all 4s (`spikes/03c-per-area-keen.md`): the change separates areas. Modularity anchor now accepts folder layout when git history is flat. Waiting on the user's checks of 02 and 03; then 05.
+Status: 01 to 05 done. 05 adds `scorecard.md` (template) and `scripts/check_scorecard.py` with 11 tests and a fixture from the keen per-area run; 16 script tests pass. decision-checker on 05 next, then 06 (delta), which reads 05's marked tables through `check_scorecard.parse`.
 
 Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.
