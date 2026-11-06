@@ -48,7 +48,7 @@ When another workflow or a hook calls this skill, or when wiring it in as a gate
    - tests: what actually proves the change, and whether any check got weaker
    - patterns the next change will copy
 
-   Skip calls the baseline explicitly left to the agent. Fold trivial naming into one count line.
+   Skip calls the baseline explicitly left to the agent (a `slice-spec` slice lists them under **Delegated to the worker**). Fold trivial naming into one count line.
 
    If the tests can't run, say why in the ledger and drop every confidence one level. Don't guess at results.
 4. **Give each decision a verdict and a confidence.**

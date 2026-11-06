@@ -38,6 +38,7 @@ Your time goes into the facts in step 1 and the answers in steps 2 to 4. The ski
 - **Think a problem through.** `/hien` loads my tools, opinions, and voice, then helps you think and build the way I would.
 - **"Did I already decide this?"** `/brain` searches your notes before the agent answers from general knowledge.
 - **One story keeps collapsing.** `/behavioral-story-depth` in Drill mode on just that story.
+- **A feature is too big to hand over.** `/slice-spec` interviews you, then writes a spec of small slices with a pass/fail check each. Agents build from it; `/decision-checker` audits against it.
 - **An agent just finished a change.** `/decision-checker` lists the calls it made where your prompt was silent, least confident first. Review that instead of the diff.
 
 ## Quick start
@@ -64,6 +65,7 @@ mkdir -p ~/.agents/skills && ln -s ~/src/agent-skills/skills/* ~/.agents/skills/
 npx skills add phuhien92/agent-skills --skill hien
 npx skills add phuhien92/agent-skills --skill radio-system-design-practice
 npx skills add phuhien92/agent-skills --skill behavioral-story-depth
+npx skills add phuhien92/agent-skills --skill slice-spec
 npx skills add phuhien92/agent-skills --skill decision-checker
 npx skills add phuhien92/agent-skills --skill brain   # needs the brain CLI: npm install -g github:phuhien92/brain-cli
 ```
@@ -81,6 +83,7 @@ npx skills add phuhien92/agent-skills --skill brain   # needs the brain CLI: npm
 
 | Skill | What it does | Use when |
 |---|---|---|
+| [slice-spec](skills/slice-spec/SKILL.md) | Interviews you one question at a time, then cuts a feature into a `specs/<feature>/` folder of slices. Each slice answers one question at one seam and has a check a script can run. | Before handing a multi-step feature to agents, a plan too big to review, a slice that keeps failing mid-build |
 | [decision-checker](skills/decision-checker/SKILL.md) | Lists every decision an agent made where the prompt or spec was silent, with a verdict and a confidence, least confident first. Changes no code. Drill mode quizzes you on the shakiest calls. | Before merging AI-written work, a diff too big to read, a fix that "works" but may only cover one case |
 
 ### Think and recall: start from what you know
@@ -109,9 +112,15 @@ agent-skills/
 │   ├── behavioral-story-depth/
 │   │   ├── SKILL.md
 │   │   └── probes.md
-│   └── decision-checker/
+│   ├── decision-checker/
+│   │   ├── SKILL.md
+│   │   ├── ledger.md
+│   │   ├── harness.md
+│   │   └── hooks/require-ledger.sh
+│   └── slice-spec/
 │       ├── SKILL.md
-│       └── ledger.md
+│       ├── spec-format.md
+│       └── drafting.md
 ├── .claude/commands/          # Claude Code slash commands
 ├── .cursor/skills/            # Cursor: symlink to skills/
 ├── commands/                  # Extra slash-command copies

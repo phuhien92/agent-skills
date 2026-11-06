@@ -18,6 +18,10 @@ Read `skills/brain/SKILL.md` and follow it. It drives the `brain` CLI; if `brain
 
 Read `skills/behavioral-story-depth/SKILL.md` and follow it. Coach. One question per turn. Never invent metrics, names, or events; missing facts become questions. Load `probes.md` only in Drill mode.
 
+## When the user runs `/slice-spec`
+
+Read `skills/slice-spec/SKILL.md` and follow it. Plan. One question per turn, with a recommended answer. Write only under `specs/<feature>/`. Load `spec-format.md` when writing the spec and `drafting.md` only for graphs of more than about three slices.
+
 ## When the user runs `/decision-checker`
 
 Read `skills/decision-checker/SKILL.md` and follow it. Review. Never change code. Rank decisions least-confident first. Load `ledger.md` only when writing the ledger. Load `harness.md` only when another workflow or a hook calls it, or when wiring it in as a gate.

@@ -18,7 +18,7 @@ This pack does not build the factory. It ships the **blocks** a factory calls at
 | Station | Block | Status |
 |---|---|---|
 | Intent | `hien`, `brain` | have |
-| Map, Slice | `slice-spec` | next to build |
+| Map, Slice | `slice-spec` | have; writes the spec that Build and Decide read |
 | Build | the harness's own workers | not ours |
 | Verify | the "agents check before the human reviews" rule in `AGENTS.md` | rule, not yet a block |
 | Decide | `decision-checker` | have; first block that runs as a gate |
