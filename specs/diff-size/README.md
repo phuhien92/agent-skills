@@ -57,6 +57,6 @@ Settled at the slice 01 gate (see `decisions.md`): always ignore indentation cha
 
 ## Next agent prompt
 
-Status: slices 01 and 02 built. 02 is `skills/slice-spec/scripts/diff_size.py` (classifier only, no CLI yet) with `test_diff_size.py`; it settles the two counting gaps from the spike: removed lines that are moves are `moved_out`, not `deleted`, and a pure rename counts every line as moved. Next: slice 03. Its filter must reach git as pathspecs, not filter counts afterwards: moves are matched only among the files diffed, so with `dist/` in the diff a `src/` line can count as moved from compiled output (`ea9b3ed`: 110 new with `dist/` in the diff, 111 without; the range: 536 vs 538).
+Status: slices 01 to 03 built. `diff_size.py` now has the classifier (02, with the fixes from Check 2) and the product-code filter (03): `count_product(repo, base, head)` judges each side of a diff against its own commit's tree, leaves non-product files out of the diff itself (so they can't supply moves), and counts skipped files by reason. `tools/test_skip_rules_drift.py` guards the copied rules. On #27 the filtered range is 513 new / 1,254 moved; that includes `specs/split-cli-commands/golden.sh`, which is a shell script and so counts as code under the same rules. Next: slice 04, the CLI and report.
 
 Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.
