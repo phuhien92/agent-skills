@@ -60,10 +60,11 @@ Build order comes from **Depends on**. 01 and 04 can start in parallel; 02 and 0
 - **Size rules settled by the user after the first ledger:** `node_modules/` and `vendor/` skipped at any depth, `dist/` and `build/` only at the repo root or a package root, no `third_party/`; **code files only** (docs, data, and images count as "not code"; this was not the recommended option); JSON skip keys are stable slugs; and **no pull request from this branch until 08**, keeping the `validate.py` check as written.
 - **Tie rule reworded, approved by the user:** "pick the lower anchor; a 4 needs the 5 anchor to fit most of the repo, a 2 needs the 1 anchor to fit most of it."
 - **Second repo for separation, approved by the user: [phuhien92/keen-design-system](https://github.com/phuhien92/keen-design-system).** A component library with no code file over 500 lines, the opposite shape of brain-cli. If it also scores all 3s, sharpen the anchors before 07.
+- **One fresh scorer per area, approved by the user.** The keen-design-system check scored all five areas 4, and brain-cli scored four 3s: each scorer carried one impression across every area. A scorer that sees only its own area can't. The rubric also gains "not scored" (too little code, with scope named) and "most" as at least two-thirds of a listed sample. Costs about five scorers per run, acceptable for a periodic check.
 - **Target repo: [phuhien92/brain-cli](https://github.com/phuhien92/brain-cli) at `7045e68`** (user's choice). It has three source files over 500 lines (`src/cli.ts` 1,692, `test/extensions.test.ts` 997, `src/extensions.ts` 540) and two files the skip rules must catch (`dist/src/cli.js` 1,579, a PNG under `assets/`). The session clone is read-only, so scorecards stay local.
 
 ## Next agent prompt
 
-Status: 01 approved (tie rule reworded); 04 built. 02 and 03 ran on brain-cli (outputs in `spikes/`), waiting for the user's checks. Separation check on keen-design-system running (`spikes/03b-scores-keen.md`). Next: 05.
+Status: 01 approved (tie rule reworded); 04 built. 02 and 03 ran on brain-cli (outputs in `spikes/`), waiting for the user's checks. Separation check on keen-design-system scored all 4s (`spikes/03b-scores-keen.md`), so scoring moved to one scorer per area; a re-run with per-area scorers is in progress. Next: 05.
 
 Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.

@@ -1,6 +1,6 @@
 # Rubric
 
-Loaded by `codebase-rubric` when scoring. Five areas, each scored 1 to 5. Only 1, 3, and 5 are defined; a 2 or a 4 means the evidence sits between two anchors. Every score needs at least one `path:line` that a person can open and see the reason in under a minute.
+Loaded by `codebase-rubric` when scoring. Five areas, each scored 1 to 5 by its own scorer, who sees only its area and never the other scores. Only 1, 3, and 5 are defined; a 2 or a 4 means the evidence sits between two anchors. Every score needs at least one `path:line` that a person can open and see the reason in under a minute.
 
 The five areas and the size tiers (target 500, soft 800, hard 1,000 lines) come from a screenshot the user shared; its source is not yet known.
 
@@ -10,6 +10,9 @@ The five areas and the size tiers (target 500, soft 800, hard 1,000 lines) come 
 2. Find evidence first, then pick the score it supports. Never pick a score and go looking for evidence.
 3. Cite the strongest evidence for the score, and one counter-example if the repo is mixed.
 4. When two anchors both fit, pick the lower anchor and say what would earn the higher. A 4 needs the 5 anchor to fit most of the repo; a 2 needs the 1 anchor to fit most of it.
+5. **"Most" means at least two-thirds of a sample.** Sample the files or units this area is about (at least six, or all of them if fewer), list the sample in the scorecard, and count how many fit the anchor.
+6. **"Not scored" is allowed** when the area has too little code to judge, such as fewer than three units or no failure path a person can reach. Say why, and say which part of the repo was checked.
+7. **Name the scope.** If the score covers only part of the repo (for example, the build tool but not the shipped library), say which part.
 
 ## Architecture
 
