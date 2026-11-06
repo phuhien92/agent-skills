@@ -27,7 +27,7 @@ LEDGER = """# Decisions: demo
 # Check 2: later
 
 ### Third call
-- **Slice:** 02
+- **Slice:** 02, 03
 - **Verdict:** needs-you. Recommended call: y.
 - **Confidence:** medium
 """
@@ -73,6 +73,10 @@ class SkillMetricsTest(unittest.TestCase):
         (sc / "notes.md").write_text("ignored\n")
         (r / "node_modules" / "x" / "specs" / "y" / "slices").mkdir(parents=True)
         (r / "node_modules" / "x" / "decisions.md").write_text(LEDGER)
+        copy = r / ".claude" / "worktrees" / "w" / "specs" / "feature"
+        (copy / "slices").mkdir(parents=True)
+        (copy / "README.md").write_text("# Feature\n")
+        (r / "notes" / "decisions.md").mkdir(parents=True)
         (r / "skill-outcomes.md").write_text(
             "# Outcomes\n"
             "- 2026-11-02 | decision-checker | overruled | timeout was fine\n"
@@ -84,8 +88,9 @@ class SkillMetricsTest(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_specs(self) -> None:
-        self.assertEqual(skill_metrics.collect(self.repo)["specs"],
-                         [{"spec": "feature", "slices": 3, "resliced": 1}])
+        specs = skill_metrics.collect(self.repo)["specs"]
+        self.assertEqual([(s["spec"], s["slices"], s["resliced"]) for s in specs], [("feature", 3, 1)],
+                         "copies under .claude/ must be skipped")
 
     def test_ledger(self) -> None:
         ledgers = skill_metrics.collect(self.repo)["ledgers"]
@@ -94,7 +99,7 @@ class SkillMetricsTest(unittest.TestCase):
         self.assertEqual((l["runs"], l["entries"]), (2, 3))
         self.assertEqual(l["verdicts"], {"needs-you": 1, "sound": 1, "unsound": 1})
         self.assertEqual(l["confidence"], {"low": 1, "medium": 2})
-        self.assertEqual(l["per_slice"], {"01": 1, "02": 2})
+        self.assertEqual(l["per_slice"], {"01": 1, "02": 2, "03": 1})
 
     def test_rubric(self) -> None:
         b = skill_metrics.collect(self.repo)["rubrics"][0]
@@ -108,6 +113,22 @@ class SkillMetricsTest(unittest.TestCase):
             "codebase-rubric": {"escaped": 1},
             "decision-checker": {"confirmed": 1, "overruled": 1},
         })
+
+    def test_run_headings(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "decisions.md"
+            p.write_text("# Check 1: first\n\n### A\n- **Verdict:** sound\n")
+            self.assertEqual(skill_metrics.ledger_stats(p)["runs"], 1)
+            p.write_text("# Decisions\n\n### A\n- **Verdict:** sound\n\n## Check 3: later\n\n### B\n- **Verdict:** sound\n")
+            self.assertEqual(skill_metrics.ledger_stats(p)["runs"], 3)
+
+    def test_unknown_commit_is_not_noise(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            sc = Path(d) / "scorecards"
+            sc.mkdir()
+            (sc / "2026-10-01.md").write_text(card("2026-10-01", "?", ["1", "1", "1", "1", "1"]))
+            (sc / "2026-10-02.md").write_text(card("2026-10-02", "?", ["5", "5", "5", "5", "5"]))
+            self.assertIsNone(skill_metrics.rubric_stats(sc)["noise"])
 
     def test_empty_repo(self) -> None:
         with tempfile.TemporaryDirectory() as d:

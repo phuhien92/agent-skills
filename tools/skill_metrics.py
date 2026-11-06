@@ -7,12 +7,13 @@ Reads each repo (default: the current folder) and reports, per skill:
 
 - slice-spec: specs, slices, resliced slices (a slice file marked "Replaced by").
 - decision-checker: ledger runs, entries by verdict and confidence, entries per
-  slice. Many entries on one slice means that slice was unclear.
+  slice (an entry naming several slices counts for each). Many entries on one
+  slice means that slice was unclear.
 - codebase-rubric: scorecards per repo, first-to-latest score change per area,
   and the largest score gap between two scorecards of the same commit
   (scoring noise; it should stay at 1 or less).
-- outcomes: lines you add to `skill-outcomes.md` when a skill's call was wrong,
-  one per event:  `- 2026-11-06 | decision-checker | overruled | <note>`
+- outcomes: lines you add to `skill-outcomes.md` when you learn whether a
+  skill's call was right, one per event:  `- 2026-11-06 | decision-checker | overruled | <note>`
   Kinds: overruled (you disagreed with a call), escaped (a problem the skill
   should have caught got through), confirmed (a call proved right).
 
@@ -29,15 +30,24 @@ from pathlib import Path
 AREAS = ["Architecture", "Modularity", "Abstraction", "Components", "Errors"]
 VERDICT = re.compile(r"\*\*Verdict:\*\*\s*(sound|unsound|needs-you)", re.I)
 CONFIDENCE = re.compile(r"\*\*Confidence:\*\*\s*(low|medium|high)", re.I)
-SLICE = re.compile(r"\*\*Slice:\*\*\s*(\d+)")
+SLICE = re.compile(r"\*\*Slice:\*\*([^\n]*)")
+RUN = re.compile(r"^#+ Check (\d+)", re.M)
 SCORECARD_NAME = re.compile(r"^(\d{4}-\d{2}-\d{2})(?:-([1-9]\d*))?\.md$")
 OUTCOME = re.compile(r"^\s*-\s*(\d{4}-\d{2}-\d{2})\s*\|\s*([\w-]+)\s*\|\s*(overruled|escaped|confirmed)\s*\|\s*(.*)$", re.I)
-SKIP_DIRS = {".git", "node_modules", "vendor", "dist", "build"}
+SKIP_DIRS = {"node_modules", "vendor", "dist", "build", "__pycache__"}
 
 
-def walk(root: Path, pattern: str) -> list[Path]:
-    return sorted(p for p in root.rglob(pattern)
-                  if not SKIP_DIRS.intersection(p.relative_to(root).parts[:-1]))
+def walk(root: Path, pattern: str, dirs: bool = False) -> list[Path]:
+    """Matches under root, skipping vendored/build folders and dot-folders
+    (.git, .claude worktrees, .venv) that hold copies of the repo."""
+    found = []
+    for p in root.rglob(pattern):
+        parents = p.relative_to(root).parts[:-1]
+        if SKIP_DIRS.intersection(parents) or any(part.startswith(".") for part in parents):
+            continue
+        if (p.is_dir() if dirs else p.is_file()):
+            found.append(p)
+    return sorted(found)
 
 
 def ledger_stats(path: Path) -> dict:
@@ -50,8 +60,10 @@ def ledger_stats(path: Path) -> dict:
         if m := CONFIDENCE.search(entry):
             confidence[m.group(1).lower()] += 1
         if m := SLICE.search(entry):
-            per_slice[m.group(1)] += 1
-    runs = 1 + len(re.findall(r"^# Check ", text, re.M)) if entries else 0
+            for number in re.findall(r"\d+", m.group(1)):
+                per_slice[number.zfill(2)] += 1
+    # Runs follow ledger.md: "# Check N: <scope>" headings; the first run may have none.
+    runs = max([1] + [int(n) for n in RUN.findall(text)]) if entries else 0
     return {"path": str(path), "runs": runs, "entries": len(entries),
             "verdicts": dict(sorted(verdicts.items())),
             "confidence": dict(sorted(confidence.items())),
@@ -61,7 +73,7 @@ def ledger_stats(path: Path) -> dict:
 def spec_stats(spec: Path) -> dict:
     slices = sorted((spec / "slices").glob("*.md")) if (spec / "slices").is_dir() else []
     replaced = [s.name for s in slices if "Replaced by" in s.read_text(encoding="utf-8", errors="replace")[:400]]
-    return {"spec": spec.name, "slices": len(slices), "resliced": len(replaced)}
+    return {"spec": spec.name, "path": str(spec), "slices": len(slices), "resliced": len(replaced)}
 
 
 def table(text: str, name: str) -> list[list[str]]:
@@ -104,8 +116,8 @@ def rubric_stats(folder: Path) -> dict:
     for c in cards:
         by_commit[c["commit"]].append(c)
     gaps = []
-    for same in by_commit.values():
-        if len(same) < 2:
+    for commit, same in by_commit.items():
+        if commit in ("?", "") or len(same) < 2:
             continue
         for a in AREAS:
             nums = [n for c in same if (n := as_number(c["scores"].get(a, ""))) is not None]
@@ -127,7 +139,7 @@ def collect(repo: Path) -> dict:
     specs = [spec_stats(p.parent) for p in walk(repo, "README.md")
              if p.parent.parent.name == "specs" and (p.parent / "slices").is_dir()]
     ledgers = [ledger_stats(p) for p in walk(repo, "decisions.md")]
-    rubrics = [rubric_stats(p) for p in walk(repo, "scorecards") if p.is_dir()]
+    rubrics = [rubric_stats(p) for p in walk(repo, "scorecards", dirs=True)]
     outcomes_file = repo / "skill-outcomes.md"
     return {"repo": str(repo), "specs": specs, "ledgers": ledgers, "rubrics": rubrics,
             "outcomes": outcome_stats(outcomes_file) if outcomes_file.is_file() else {}}
@@ -138,7 +150,7 @@ def as_text(results: list[dict]) -> str:
     for r in results:
         out.append(f"# {r['repo']}")
         out.append("\n## slice-spec")
-        out += [f"- {s['spec']}: {s['slices']} slices, {s['resliced']} resliced" for s in r["specs"]] or ["- no specs"]
+        out += [f"- {s['path']}: {s['slices']} slices, {s['resliced']} resliced" for s in r["specs"]] or ["- no specs"]
         out.append("\n## decision-checker")
         for l in r["ledgers"]:
             v = ", ".join(f"{k} {n}" for k, n in l["verdicts"].items()) or "none"
