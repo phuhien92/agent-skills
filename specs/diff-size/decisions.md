@@ -114,3 +114,8 @@ Trivial calls folded: script layout, stdout output, subject and moved-share colu
 ## Next step
 
 Fix the PR-range label and the reversed rows-vs-range reason in `pr27.md` and slice 04, update the README prompt, then put the corrected table in front of the user for the tier and whitespace gate. Four of the six non-trivial entries sit in how the spike reads and frames its numbers, not in the counting. When 02 is drafted, settle the definitions of "deleted", "renamed" and "PR range" in the spec first.
+
+# User decisions at the slice 01 gate (2026-11-06)
+
+- **Whitespace setting:** always `--color-moved-ws=allow-indentation-change`; the small remaining undercount (short moved lines below git's block-size floor) is labelled in the output. Approved by the user after reading `spikes/pr27.md`.
+- **Tiers locked:** target 400, soft 800, hard 1,500 new product-code lines, for each commit and for the PR total. Approved by the user; no longer provisional.

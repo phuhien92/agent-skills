@@ -21,7 +21,7 @@ How the user will know it worked: run it on brain-cli PR #27's seven slice commi
 ## Constraints
 
 - **Measure:** added lines that are not moves, product code only, per commit. Moved and deleted lines are reported, not tiered.
-- **Tiers (provisional until the user locks them after slice 01):** target 400, soft 800, hard 1,500 new lines per commit. Over target: shown. Over soft: "consider Reslice". Over hard: "reslice before review". All warnings.
+- **Tiers (locked by the user at the slice 01 gate):** target 400, soft 800, hard 1,500 new lines per commit. Over target: shown. Over soft: "consider Reslice". Over hard: "reslice before review". All warnings.
 - **PR total:** one sum line over the range, tiered on the same numbers. Over soft: "split the goal". Still a warning. (Changed after the interview: the user said "If a PR is too large, we should break down the goal into multiple subtasks to reduce the PR size", and accepted the recommendation below. This replaces the earlier "sum line with no tier".)
 - **Splitting is planned up front.** In Interview, when the drafted slices' estimated new lines add up to more than soft, `slice-spec` splits the goal into sub-goals, one PR each. Each PR ships on its own and leaves `main` working. The slice graph gets a **PR** column; a slice belongs to exactly one PR. The estimate is a planning guess; `diff_size.py` gives the real number after each PR.
 - **Mid-build:** when a branch's running total crosses soft, `slice-spec` suggests Reslice to move the remaining slices to a follow-up PR. It never moves them on its own.
@@ -42,9 +42,9 @@ All five slices are one PR: their estimated new code (a script of a few hundred 
 
 ## Open questions
 
-- **Whitespace fallback.** My own probe confirms the fail-fast drafter: with git's default whitespace handling, `138fb64` shows 513 new / 127 moved; with `--color-moved-ws=allow-indentation-change`, 171 new / 469 moved (`fc3f4a6`: 166/160 → 78/248). **Recommended:** always use `allow-indentation-change`, and label the remaining undercount (short moved lines under git's block-size floor count as new). The user decides at the end of slice 01.
-- **Tier numbers.** 400 / 800 / 1,500 are a guess. **Recommended:** keep them unless the spike table shows a slice the user considers reviewable landing over soft. The user locks them at the end of slice 01.
 - **The spot-check commit.** **Recommended:** `138fb64` (slice 05), the largest. It also carries a real fix ("fix the router table lookup"), so some new lines there are genuinely new. The user does the spot-check in slice 04.
+
+Settled at the slice 01 gate (see `decisions.md`): always ignore indentation changes, with the undercount labelled; tiers locked at 400 / 800 / 1,500.
 
 ## Decided in planning
 
@@ -57,6 +57,6 @@ All five slices are one PR: their estimated new code (a script of a few hundred 
 
 ## Next agent prompt
 
-Status: slice 01 built (`spikes/pr27.py`, `spikes/pr27.md`) and checked (`decisions.md`, Check 1); its fixes are in. Waiting on the user to lock the tiers and the whitespace setting at the 01 gate. After that, start slice 02 (`slices/02-move-classifier.md`); it should also settle the two counting gaps the spike found (moved-out lines inside "deleted", pure renames counted as 0).
+Status: slice 01 built (`spikes/pr27.py`, `spikes/pr27.md`) and checked (`decisions.md`, Check 1); its fixes are in. The user locked the tiers and the whitespace setting. Next: slice 02 (`slices/02-move-classifier.md`); it should also settle the two counting gaps the spike found (moved-out lines inside "deleted", pure renames counted as 0).
 
 Before reporting a slice done, follow the `decision-checker` skill in Check mode on this branch and save `decisions.md`. Update this prompt before you end.
