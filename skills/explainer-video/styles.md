@@ -40,6 +40,26 @@ From the Y2 grammar in alchaincyf/huashu-art-motion, in short:
 - Paper props can be generated: cloveric/claude-drawing-skill's newspaper-collage library makes
   torn newsprint, aged strips, halftone prints and a desk board with numpy + Pillow.
 
+## Cartoon stage
+
+- One full-frame stage per sentence: sky, backdrop, ground line, and ten or more things alive at
+  once (a rising sun, drifting clouds, flowers popping up, characters walking in with hops).
+- Characters act with simple moves on twos: `pop` (scale in with overshoot), `hop` (up, land,
+  squash), `walk` (hops along with a sway), `bob`, `shake`, a white `flash`, a squash-spin swap for
+  transformations. Reused art keeps its own small CSS animations.
+- Stages change by a cut with a short 96 px slide; the camera only breathes inside a stage. No
+  captions: diegetic text only (a banner reading "321 KD").
+
+## Royal chronicle
+
+- An illuminated book, one recto page per sentence: a vermilion blackletter heading, a picture in
+  a gilt frame, a burnished gold initial, and the narration lettered in by a quill at the
+  narrator's pace (it doubles as captions).
+- Pictures are inked first (strokes recoloured to iron-gall brown), then washed (fills at about
+  85% with a turbulence displacement filter and a little sepia).
+- Pages turn on sentence breaks: rotate about the gutter edge to −92° with a darkening shade.
+  claude-drawing-skill's illuminated library makes the vellum, ivy borders and gold leaf.
+
 ## Record the app
 
 Open the app's own animated page in Playwright, hide its chrome with injected CSS, widen it for

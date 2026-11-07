@@ -18,6 +18,11 @@ Each line is a failure that has actually happened.
 - [ ] The end card fits the frame (rotation adds width) and the page or desk extends past the
       frame at the final zoom.
 
+- [ ] Stages or scenes that aren't on screen are `display: none`, not just hidden; otherwise every
+      frame pays for them (one 72 s film went from about 1 to 7 frames a second).
+- [ ] CSS animations in reused art (flags, flames) are driven from `SEEK`: pause each of
+      `document.getAnimations()` and set its `currentTime` to the frame time.
+
 ## Timing
 
 - [ ] Beat k starts within 0.2 s of narration sentence k. Measure motion onset by frame
