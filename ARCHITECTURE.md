@@ -117,6 +117,14 @@ CI: `.github/workflows/validate.yml` runs the validator and the `codebase-rubric
 
 Newest first. Each entry says what we decided, why, what we turned down, where it can fail, and when to revisit it.
 
+### 2026-11-07: Add `explainer-video` and `house-style-design`, the first "make" skills
+
+- **Decision:** two skills that produce media from a project's own art. `explainer-video` builds a film as one deterministic web page (camera rig, elements on twos, `SEEK(t)`), times every beat to the narration with `scripts/vo_lines.py`, renders frame by frame, and mixes to −14 LUFS with `scripts/mix.py`. `house-style-design` reads the house style and rules, draws at twice the house canvas, frames the art (an ultimate card template), and renders PNGs checked at phone size.
+- **Why:** both came out of real work on one game (three cuts of a lore video, two ultimate cards). The same failures repeated: labels shifted after fonts loaded, highlights guessed instead of measured, a Vox-style desk chosen for an invented world, sentence times guessed from pause length, faces hidden by props. Each is now a rule, a check or a script.
+- **Turned down:** shipping per-style starters (one starter has every helper; styles are a reference file); hosted video services (a local render keeps the user's art off third parties); bundling a sound library (any library works through a cues file).
+- **Where it can fail:** `vo_lines.py` aligns phrases to the script's punctuation and pause length; narrators who skip many commas or read in one breath need a manual check (lines are flagged). Neither skill can hear or judge taste; both say what they couldn't check. They sit outside the factory stations: human-facing make tools, like the coaching skills.
+- **Revisit when:** a second project uses them; if they grow, group them in a `plugins/make/` bundle.
+
 ### 2026-11-06: Measure the skills from their own output first
 
 - **Decision:** `tools/skill_metrics.py` reads specs, `decisions.md` ledgers, `scorecards/`, and a hand-kept `skill-outcomes.md`, and reports per-skill numbers: reslices, verdicts per slice, score change, scoring noise, and overruled, escaped, and confirmed calls. Read only, standard library only, tested in CI.

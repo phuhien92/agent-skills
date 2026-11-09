@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ultimate card template</title>
+<!-- house-style-design card template. Setup in this folder: npm i @fontsource/anton @fontsource/oswald @fontsource/source-serif-4
+     One <article class="card"> per design. Replace the art SVG, the words and the colours (burst, ribbon, frame) from the house palette.
+     Slots: .limit (top-left stat), .ribbon (tier), .stats (two stat badges), .figure (the art), .plate (series + name), .text (flavor + moves). -->
+<style>
+@font-face{font-family:Anton;src:url(node_modules/@fontsource/anton/files/anton-latin-400-normal.woff2)}
+@font-face{font-family:Osw;font-weight:700;src:url(node_modules/@fontsource/oswald/files/oswald-latin-700-normal.woff2)}
+@font-face{font-family:Serif4;font-weight:600;src:url(node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-600-normal.woff2)}
+@font-face{font-family:Serif4;font-weight:400;src:url(node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-400-normal.woff2)}
+:root{--ink:#1b1b1f}
+body{margin:0;background:#2a2333;display:flex;gap:70px;padding:70px;width:max-content}
+.card{position:relative;width:750px;height:1050px;border-radius:40px;border:7px solid var(--ink);box-sizing:border-box;
+  background:linear-gradient(135deg,#fff3b0 0%,#f5c542 18%,#b8860b 34%,#ffe27a 50%,#c99a1c 66%,#fff1a8 82%,#d4a017 100%);
+  box-shadow:0 30px 60px rgba(0,0,0,.45);overflow:hidden;font-family:Osw}
+.card::after{content:"";position:absolute;inset:0;border-radius:33px;pointer-events:none;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.55) 42%,transparent 50%,transparent 62%,rgba(255,255,255,.3) 70%,transparent 76%);mix-blend-mode:soft-light}
+.art{position:absolute;left:26px;right:26px;top:26px;height:640px;border:6px solid var(--ink);border-radius:28px;overflow:hidden}
+.burst{position:absolute;inset:-40%;}
+.holo{position:absolute;inset:0;background:linear-gradient(125deg,rgba(255,0,170,.22),rgba(0,220,255,.22) 30%,rgba(120,255,120,.18) 55%,rgba(255,230,0,.22) 75%,rgba(255,0,170,.2));mix-blend-mode:color-dodge;opacity:.55}
+.dots{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.75) 1.5px,transparent 2px);background-size:22px 22px;mix-blend-mode:overlay;opacity:.5}
+.figure{position:absolute;left:0;right:0;top:58px;bottom:138px}
+.figure svg{width:100%;height:100%;overflow:visible}
+.badge{position:absolute;display:flex;align-items:center;justify-content:center;border:5px solid var(--ink);background:#fff;font:400 54px/1 Anton;color:var(--ink);z-index:3}
+.limit{left:22px;top:20px;width:104px;height:104px;border-radius:50%;background:#ff5d73;color:#fff;-webkit-text-stroke:2px var(--ink);flex-direction:column}
+.stats{position:absolute;right:20px;top:20px;display:flex;flex-direction:column;gap:12px;z-index:3}
+.stat{position:relative;width:118px;height:70px;border:5px solid var(--ink);border-radius:20px;background:#fff;display:flex;align-items:center;gap:6px;padding-left:8px;box-sizing:border-box;font:400 46px/1 Anton}
+.stat svg{width:44px;height:44px;flex:none}
+.ribbon{position:absolute;left:50%;top:26px;transform:translateX(-50%);z-index:3;background:#d7263d;color:#fff;font:700 30px/1 Osw;letter-spacing:.12em;padding:14px 34px 16px;border:5px solid var(--ink);border-radius:10px;white-space:nowrap;box-shadow:5px 5px 0 var(--ink)}
+.plate{position:absolute;left:40px;right:40px;bottom:24px;background:var(--ink);border:5px solid #ffd23f;border-radius:20px;text-align:center;padding:12px 10px 16px;z-index:3}
+.series{font:700 22px/1 Osw;letter-spacing:.24em;color:#ffd23f}
+.name{font:400 70px/1.02 Anton;color:#fff;letter-spacing:.02em;margin-top:6px}
+.text{position:absolute;left:26px;right:26px;top:682px;bottom:58px;background:#fbf6e6;border:6px solid var(--ink);border-radius:24px;padding:14px 20px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px}
+.flavor{font:italic 400 20px/1.28 Serif4;color:#4a3d2a;text-align:center;margin:0 0 2px}
+.move{display:flex;gap:12px;align-items:flex-start;font:400 20px/1.25 Serif4;color:#2a2622}
+.move svg{width:42px;height:42px;flex:none;margin-top:2px}
+.move b{font-weight:600}
+.move .mn{font:700 22px/1.1 Osw;letter-spacing:.04em;color:var(--ink);text-transform:uppercase}
+.move.ult{background:linear-gradient(90deg,#ffe58a,#fff4c4);border:4px solid var(--ink);border-radius:16px;padding:6px 10px}
+.foot{position:absolute;left:0;right:0;bottom:16px;text-align:center;font:700 20px/1 Osw;letter-spacing:.2em;color:var(--ink);opacity:.85}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-bolt" viewBox="0 0 48 48"><path d="M27 3 9 27h13l-4 18 21-27H25z" fill="#ffd23f" stroke="#1b1b1f" stroke-width="3.5" stroke-linejoin="round"/></symbol>
+    <symbol id="i-burst" viewBox="0 0 48 48"><path d="M24 2l5 11 11-6-4 12 12 4-11 6 6 11-12-3-3 12-6-10-7 10-2-12-12 3 6-11L1 23l12-4-4-12 11 6z" fill="#ff7ab6" stroke="#1b1b1f" stroke-width="3" stroke-linejoin="round"/></symbol>
+    <symbol id="i-star" viewBox="0 0 48 48"><path d="M24 3l6 13 14 2-10 10 3 15-13-7-13 7 3-15L4 18l14-2z" fill="#ffd23f" stroke="#1b1b1f" stroke-width="3.5" stroke-linejoin="round"/><circle cx="24" cy="25" r="4" fill="#fff" stroke="#1b1b1f" stroke-width="2"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 48 48"><path d="M24 43S4 30 4 16C4 9 9 5 15 5c4 0 7 2 9 6 2-4 5-6 9-6 6 0 11 4 11 11 0 14-20 27-20 27z" fill="#ff5d73" stroke="#1b1b1f" stroke-width="3.5"/></symbol>
+  </defs>
+</svg>
+
+<article class="card" id="card-1">
+  <div class="art">
+    <div class="burst" style="background:repeating-conic-gradient(from 0deg at 50% 46%,#7c3aed 0 7.5deg,#fbbf24 7.5deg 15deg,#a855f7 15deg 22.5deg,#fde68a 22.5deg 30deg)"></div>
+    <div class="holo"></div><div class="dots"></div>
+    <div class="badge limit" title="Main stat">9</div>
+    <div class="ribbon">ULTIMATE · LEGEND</div>
+    <div class="stats">
+      <div class="stat"><svg><use href="#i-bolt"/></svg>+2</div>
+      <div class="stat"><svg><use href="#i-burst"/></svg>+4</div>
+    </div>
+    <div class="figure">
+<!-- REPLACE: the character, drawn at 2x the house canvas. This placeholder is an original star mascot. -->
+<svg viewBox="0 0 420 380" role="img" aria-label="Placeholder: a smiling star with a cape and a wand">
+<g stroke="#1b1b1f" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M120 200Q70 290 80 372h260q10-82-40-172z" fill="#6d28d9"/>
+  <path d="M110 300l-8 70M310 300l8 70" fill="none" stroke="#4c1d95" stroke-width="4"/>
+  <path d="M210 40l40 82 90 12-66 62 16 90-80-44-80 44 16-90-66-62 90-12z" fill="#fde047"/>
+  <path d="M190 90l-8 18" stroke="#fff" stroke-width="5"/>
+  <ellipse cx="178" cy="196" rx="11" ry="6" fill="#fb7185" stroke="none" opacity=".65"/>
+  <ellipse cx="242" cy="196" rx="11" ry="6" fill="#fb7185" stroke="none" opacity=".65"/>
+  <circle cx="190" cy="176" r="8" fill="#1b1b1f" stroke="none"/><circle cx="230" cy="176" r="8" fill="#1b1b1f" stroke="none"/>
+  <circle cx="193" cy="172" r="3" fill="#fff" stroke="none"/><circle cx="233" cy="172" r="3" fill="#fff" stroke="none"/>
+  <path d="M194 206q16 14 32 0" fill="none"/>
+  <path d="M276 210q20-4 30-20" fill="none"/>
+  <path d="M300 200l26-90" stroke-width="7" stroke="#ca8a04"/><path d="M300 200l26-90" stroke-width="2.5"/>
+  <circle cx="328" cy="104" r="15" fill="#38bdf8"/><circle cx="323" cy="99" r="4" fill="#fff" stroke="none"/>
+  <circle cx="304" cy="196" r="11" fill="#fde047" stroke-width="5"/>
+</g>
+<g fill="#fde047" stroke="#1b1b1f" stroke-width="2.5" stroke-linejoin="round"><path d="M40 60l4 10 10 4-10 4-4 10-4-10-10-4 10-4z"/><path d="M380 230l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/></g>
+</svg>
+    </div>
+    <div class="plate"><div class="series">★★★★★ &nbsp;ULTIMATE&nbsp; ★★★★★</div><div class="name">CHARACTER NAME</div></div>
+  </div>
+  <div class="text">
+    <p class="flavor">One line of flavor in the house voice.</p>
+    <div class="move"><svg><use href="#i-bolt"/></svg><div><div class="mn">First Move</div><b>Effect:</b> placeholder effect text</div></div>
+    <div class="move"><svg><use href="#i-burst"/></svg><div><div class="mn">Second Move</div><b>Effect:</b> placeholder effect text</div></div>
+    <div class="move ult"><svg><use href="#i-star"/></svg><div><div class="mn">Ultimate · Big Move</div><b>Once per game:</b> placeholder effect text</div></div>
+  </div>
+  <div class="foot">LEGEND · No. 001</div>
+</article>
+</body>
+</html>

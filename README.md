@@ -102,6 +102,13 @@ npx skills add phuhien92/agent-skills --skill brain   # needs the brain CLI: npm
 | [think-with-me](skills/think-with-me/SKILL.md) | Summons Hien Luong (Raymond): loads ENTRY, TOOLS, OPINIONS, and VOICE, then helps you think and build. | `/think-with-me`, or when asked how Hien thinks, builds, or solves problems |
 | [brain](skills/brain/SKILL.md) | Searches and updates your markdown vault (Obsidian or similar) through the [brain CLI](https://github.com/phuhien92/brain-cli): ranked search, notes by name, one-file-per-entry memory that syncs across machines. | Questions about your notes, past decisions or preferences; recording a lesson worth keeping. Requires the CLI |
 
+### Make: videos and designs from a project's own art
+
+| Skill | What it does | Use when |
+|---|---|---|
+| [explainer-video](skills/explainer-video/SKILL.md) | Builds a narrated video as one web page (HTML + GSAP), with every beat timed to the narration's sentences, renders it frame by frame, and mixes voice, effects and music to −14 LUFS. Styles: notebook draw-on, collage desk, recorded app, and more, picked by content. | A trailer, lore or history clip, an explainer, or the same story re-cut in another style |
+| [house-style-design](skills/house-style-design/SKILL.md) | Reads a project's art style and rules, draws new or upgraded art in code at twice the house canvas, frames it (for example as an ultimate collectible card), and renders PNGs checked at phone size. | A "legendary" or more detailed version of a character, a new card, a promo graphic that must match the app |
+
 ## Project structure
 
 ```
@@ -131,11 +138,21 @@ agent-skills/
 │   │   ├── spec-format.md
 │   │   ├── drafting.md
 │   │   └── scripts/           # diff_size: new vs moved lines per commit and PR
-│   └── codebase-rubric/
+│   ├── codebase-rubric/
+│   │   ├── SKILL.md
+│   │   ├── rubric.md
+│   │   ├── scorecard.md
+│   │   └── scripts/           # size_report, check_scorecard, delta, and their tests
+│   ├── explainer-video/
+│   │   ├── SKILL.md
+│   │   ├── styles.md, checks.md, sound.md
+│   │   ├── assets/starter.html  # camera rig, 12 fps element layer, draw-on and ink helpers
+│   │   └── scripts/           # vo_lines (sentence timing), render_frames, mix
+│   └── house-style-design/
 │       ├── SKILL.md
-│       ├── rubric.md
-│       ├── scorecard.md
-│       └── scripts/           # size_report, check_scorecard, delta, and their tests
+│       ├── drawing.md
+│       ├── assets/card.html   # ultimate card template
+│       └── scripts/render.cjs # PNGs at 2x plus a contact sheet
 ├── .claude/commands/          # Claude Code slash commands
 ├── .cursor/skills/            # Cursor: symlink to skills/
 ├── commands/                  # Extra slash-command copies

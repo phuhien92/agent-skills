@@ -30,6 +30,14 @@ Read `skills/codebase-rubric/SKILL.md` and follow it. Survey. Write only `scorec
 
 Read `skills/decision-checker/SKILL.md` and follow it. Review. Never change code. Rank decisions least-confident first. Load `ledger.md` only when writing the ledger. Load `harness.md` only when another workflow or a hook calls it, or when wiring it in as a gate.
 
+## When the user runs `/explainer-video`
+
+Read `skills/explainer-video/SKILL.md` and follow it. Make. Settle style, format, length and voice in one question with recommendations; load `styles.md` before recommending a style. Time beats with `scripts/vo_lines.py`. Review stills against `checks.md` before the full render. Ask before spending credits on text to speech.
+
+## When the user runs `/house-style-design`
+
+Read `skills/house-style-design/SKILL.md` and follow it. Make. Read the house style and the project's rules before drawing; load `drawing.md` when drawing. Characters stay original. Mechanics on a card are placeholders unless they come from the project's data; don't edit the project unasked.
+
 ## Agents check before the human reviews
 
 For build, review, or research work (including authoring skills here), have independent subagents do the front-loaded work first: drafting, verifying, and critiquing each other's output with fresh context. Hand the user the checked result plus a short ledger of the decisions made on their behalf, least-confident first (`/decision-checker` produces it). Ask before starting only when intent or scope is unclear.
