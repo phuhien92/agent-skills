@@ -1,7 +1,7 @@
 {
   "name": "agent-skills",
   "version": "0.1.0",
-  "description": "Agent skill blocks for software factories: /think-with-me, /brain, /behavioral-story-depth, /radio-system-design-practice, /slice-spec, /decision-checker, /codebase-rubric, /explainer-video, and /house-style-design.",
+  "description": "Agent skill blocks for software factories: /think-with-me, /brain, /behavioral-story-depth, /radio-system-design-practice, /slice-spec, /decision-checker, /codebase-rubric, /explainer-video, and /house-style-design, plus a decision-checker reviewer subagent.",
   "author": {
     "name": "Hien Luong"
   },
@@ -12,5 +12,8 @@
     "./.claude/commands",
     "./commands"
   ],
-  "skills": "./skills"
+  "skills": "./skills",
+  "agents": [
+    "./.claude/agents/decision-checker.md"
+  ]
 }

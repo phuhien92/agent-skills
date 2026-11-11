@@ -68,8 +68,8 @@ base = os.environ["BASE"]
 print(json.dumps({"decision": "block", "reason": (
     "This branch changes code but has no decisions ledger. Before finishing, hand it to the "
     "decision-checker subagent (Agent tool: decision-checker, or agent-skills:decision-checker "
-    "from the plugin) so a reviewer with fresh context checks it. Give it the scope (this branch "
-    "against " + base + "), the baseline (the spec path, the issue, or the user\x27s request quoted) "
+    "from the plugin) so a reviewer with fresh context checks it. Give it the scope (everything "
+    "since the branch left " + base + ": its commits plus uncommitted and untracked files), the baseline (the spec path, the issue, or the user\x27s request quoted) "
     "and every place you had to guess. It saves decisions.md. Then hand back its Check these first "
     "list, not the diff. If no such subagent is installed, run the decision-checker skill yourself "
     "in Check mode (no user is present: follow its rule 7) and save decisions.md.")}))'

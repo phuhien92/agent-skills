@@ -105,32 +105,28 @@ def check_context_files() -> None:
 
 
 def check_agents(skills: set[str]) -> None:
-    """A subagent wraps one skill: agents/<name>.md, linked from .claude/agents/."""
-    for f in sorted((ROOT / "agents").glob("*.md")):
-        name = f.stem
-        fm = frontmatter(f.read_text(encoding="utf-8"))
+    """A subagent wraps one skill: .claude/agents/<name>.md, listed in the plugin manifest."""
+    folder = ROOT / ".claude" / "agents"
+    manifest = (ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+    for f in sorted(folder.glob("*.md")) if folder.is_dir() else []:
+        name, rel = f.stem, f".claude/agents/{f.name}"
+        if f.is_symlink():
+            err(f"{rel} is a symlink", f"make {rel} a real file; the plugin manifest points at it")
+        text = f.read_text(encoding="utf-8")
+        fm = frontmatter(text)
         if fm is None or fm.get("name") != name:
-            err(f"agents/{f.name} name is {None if fm is None else fm.get('name')!r}",
+            err(f"{rel} name is {None if fm is None else fm.get('name')!r}",
                 f"start it with frontmatter and set `name: {name}` to match the file")
         elif "description" not in fm:
-            err(f"agents/{f.name} has no description",
-                "add `description:` saying when to hand work to this subagent")
+            err(f"{rel} has no description", "add `description:` saying when to hand work to this subagent")
         if name not in skills:
-            err(f"agents/{f.name} has no matching skills/{name}/",
-                f"name the subagent after the skill it runs, or delete agents/{f.name}")
-        elif f"`{name}`" not in f.read_text(encoding="utf-8"):
-            err(f"agents/{f.name} doesn't load the `{name}` skill",
+            err(f"{rel} has no matching skills/{name}/",
+                f"name the subagent after the skill it runs, or delete {rel}")
+        elif f"`{name}`" not in text:
+            err(f"{rel} doesn't load the `{name}` skill",
                 f"tell it to load the `{name}` skill; never copy the skill's text into it")
-        link = ROOT / ".claude" / "agents" / f.name
-        if not link.is_symlink() or os.readlink(link) != f"../../agents/{f.name}":
-            err(f".claude/agents/{f.name} is not a symlink to agents/{f.name}",
-                f"ln -sfn ../../agents/{f.name} .claude/agents/{f.name}")
-    claude_agents = ROOT / ".claude" / "agents"
-    if claude_agents.is_dir():
-        for f in sorted(claude_agents.iterdir()):
-            if not (ROOT / "agents" / f.name).is_file():
-                err(f".claude/agents/{f.name} has no matching agents/{f.name}",
-                    f"rm .claude/agents/{f.name}")
+        if f'"./{rel}"' not in manifest:
+            err(f"{rel} is not in .claude-plugin/plugin.json", f'add "./{rel}" to its "agents" list')
 
 
 def check_orphans(skills: set[str]) -> None:

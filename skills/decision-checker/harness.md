@@ -14,6 +14,20 @@ Loaded only when wiring this skill into a harness, or when a harness calls it. T
 
 With no user present the skill follows its rule 7: baseline inferred and said so, confidence capped at medium, ledger saved without asking. It never waits.
 
+## Who runs the check: a reviewer subagent
+
+`.claude/agents/decision-checker.md` is a Claude Code subagent that runs this skill with fresh context. The author is the worst reviewer of its own work, so in Claude Code the check runs there, not in the session that wrote the code. The plugin ships it as `agent-skills:decision-checker`; in a project, copy it into the project's `.claude/agents/`.
+
+Hand it a brief with three things:
+
+- **Scope:** the branch, commit range, or PR. From the hook, that's everything since the branch left its base, uncommitted and untracked files included.
+- **Baseline:** the spec path, the issue, or the user's request quoted.
+- **Where the author guessed:** the author's own list. The subagent treats it as step 2 of Check, never as the ledger.
+
+It has no way to ask a user, so rule 7 always applies there. To answer questions yourself, run `/decision-checker` in your own session instead.
+
+To review someone's PR: check out its branch and ask for the subagent with the PR as the scope and its linked issue as the baseline.
+
 ## Four ways to make it a gate
 
 ### 1. A line in the task's instructions
@@ -24,23 +38,9 @@ Any orchestrator that writes task instructions (a firstmate brief, a spec's Next
 
 Cheapest to add. It's still a prompt, so a worker can skip it. Pair it with option 2 where you can.
 
-### 2. A reviewer subagent (Claude Code)
+### 2. A Claude Code Stop hook
 
-`agents/decision-checker.md` at the pack's root is a subagent that runs this skill with fresh context. The author is the worst reviewer of its own work, so in Claude Code the check runs there, not in the session that wrote the code. The plugin ships it as `agent-skills:decision-checker`; in a project, link or copy it into `.claude/agents/`.
-
-Hand it a brief with three things:
-
-- **Scope:** the branch, commit range, or PR.
-- **Baseline:** the spec path, the issue, or the user's request quoted.
-- **Where the author guessed:** the author's own list. The subagent treats it as step 2 of Check, never as the ledger.
-
-It has no way to ask a user, so rule 7 always applies there. To answer questions yourself, run `/decision-checker` in your own session instead.
-
-To review someone's PR: check out its branch and ask for the subagent with the PR as the scope and its linked issue as the baseline.
-
-### 3. A Claude Code Stop hook
-
-`hooks/require-ledger.sh` blocks the agent from finishing once when the branch changes non-doc files but has no new or updated `decisions.md`. It then tells the agent to hand the branch to the reviewer subagent (option 2), and to run this skill itself only when that subagent isn't installed. It never blocks twice in a row, and it steps aside when it can't tell (no git repo, no base branch). Docs-only changes pass.
+`hooks/require-ledger.sh` blocks the agent from finishing once when the branch changes non-doc files but has no new or updated `decisions.md`. It then tells the agent to hand the branch to the reviewer subagent (above), and to run this skill itself only when that subagent isn't installed. It never blocks twice in a row, and it steps aside when it can't tell (no git repo, no base branch). Docs-only changes pass.
 
 Install the subagent too, or the hook falls back to a self-review. Add to the project's `.claude/settings.json`, with the path pointing at wherever this skill is installed:
 
@@ -64,13 +64,13 @@ It limits itself: never twice in a row, and never twice in one session for the s
 
 Limits, on purpose: it checks that a ledger exists on the branch, not that it's good or current. A ledger written early and never updated still passes, and so does any gitignored `decisions.md` on disk. Deleting a ledger never counts as writing one. Quality is the skill's job; the hook only makes sure the check happened.
 
-### 4. A firstmate task
+### 3. A firstmate task
 
 In a firstmate home, install this skill where workers can load it, then put the line from option 1 in the brief's `## Firstmate spec`. The brief's `## Captain's intent` is the baseline. The ledger counts as evidence for the captain, not authorization: merging still follows the project's merge authority.
 
-### 5. DeepSeek Harness
+### 4. DeepSeek Harness
 
-DeepSeek Harness (`dsh`) discovers `<name>/SKILL.md` bundles in `<project>/.agents/skills` and `~/.agents/skills`, so this skill loads as-is. For the gate, mount its `@deepseek-ai/dsh-hooks-claude-code` bridge (experimental) and point `configPath` at the settings file from option 3:
+DeepSeek Harness (`dsh`) discovers `<name>/SKILL.md` bundles in `<project>/.agents/skills` and `~/.agents/skills`, so this skill loads as-is. For the gate, mount its `@deepseek-ai/dsh-hooks-claude-code` bridge (experimental) and point `configPath` at the settings file from option 2:
 
 ```yaml
 - name: '@deepseek-ai/dsh-hooks-claude-code'
