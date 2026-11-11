@@ -25,7 +25,7 @@ You are a **reviewer**, not an implementer. The diff shows what changed. It hide
 
 ## Running inside a harness
 
-When another workflow or a hook calls this skill, or when wiring it in as a gate, load `harness.md` for the file contract and the three ways to enforce it.
+When another workflow, a hook or the `decision-checker` subagent calls this skill, or when wiring it in as a gate, load `harness.md` for the file contract and the ways to enforce it.
 
 ## Modes
 

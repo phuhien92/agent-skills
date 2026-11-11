@@ -38,7 +38,7 @@ Before an agent opens a PR, it runs `python3 <slice-spec>/scripts/diff_size.py .
 | 3. File contract | Reads one known file, writes one known file | a contract table in the skill |
 | 4. Enforced gate | A hook or task instructions require it before "done" | a hook script plus an eval |
 
-`decision-checker` is at level 4: `harness.md` holds its contract, and `hooks/require-ledger.sh` is its Stop-hook gate.
+`decision-checker` is at level 4: `harness.md` holds its contract, `hooks/require-ledger.sh` is its Stop-hook gate, and `.claude/agents/decision-checker.md` is the reviewer subagent the hook hands work to.
 
 ### Design rules for blocks
 
@@ -69,6 +69,7 @@ agent-skills/
 │   ├── SKILL.md                  # frontmatter: name, description ("Use when …")
 │   ├── *.md                      # optional, loaded on demand
 │   └── hooks/                    # optional hook scripts that enforce a gate
+├── .claude/agents/<name>.md      # optional Claude Code subagent that loads the <name> skill
 ├── .claude/commands/<name>.md    # Claude Code slash command → "follow the <name> skill"
 ├── commands/<name>.md            # plugin command copy (same text)
 ├── .cursor/commands/<name>.md    # Cursor slash command (same text)
@@ -91,6 +92,7 @@ agent-skills/
 | Cursor | `.cursor/commands/<name>.md` + `.cursor/skills/<name>` symlink | `validate.py` |
 | Docs | a row in `README.md` and a `/name` section in `AGENTS.md` | `validate.py` |
 | Behavior | `evals/<name>.md` | `validate.py` (warning until every skill has one) |
+| Subagent (optional) | `.claude/agents/<name>.md` named after the skill and loading it, listed in `.claude-plugin/plugin.json` `agents` | `validate.py` |
 
 ## Quality gates
 
@@ -116,6 +118,14 @@ CI: `.github/workflows/validate.yml` runs the validator and the `codebase-rubric
 ## Decisions log
 
 Newest first. Each entry says what we decided, why, what we turned down, where it can fail, and when to revisit it.
+
+### 2026-11-11: The Stop hook hands the check to a reviewer subagent
+
+- **Decision:** add `.claude/agents/decision-checker.md`, a Claude Code subagent that loads the skill and runs Check with fresh context. `require-ledger.sh` now tells the agent to hand the branch to it, with the scope, the baseline and the author's own guesses, and to run the skill itself only when the subagent isn't installed. One real file, no symlink: the plugin manifest's `agents` field points at it, as `commands` already points at `.claude/commands`.
+- **Why:** the hook made the author check its own work, against the "agents check before the human reviews" rule. Structure over prompts: the hook already fires reliably, so pointing it at an independent reviewer is the cheapest way to make that rule real.
+- **Turned down:** a root `agents/` folder with a `.claude/agents/` symlink (nobody confirmed Claude Code follows a symlinked agent file, and a miss would quietly send the hook back to self-review), copying the skill's text into the agent (breaks one source of truth; the agent only loads the skill), preloading it with the `skills:` field (the name differs between a plugin and a project install, and a wrong name fails quietly), and a hook that spawns the subagent itself (hooks can't; the block reason is the lever).
+- **Where it can fail:** the block reason is still words. The main agent can ignore it and review itself, and the hook can't tell the difference, because it only checks that `decisions.md` exists. In a subagent nobody can answer questions, so every run follows rule 7 and caps confidence at medium. Confirmed on 2026-11-11 that Claude Code loads the file: with this repo open it appeared as the `decision-checker` agent type. `tools/test_validate_agents.py` covers the validator's agent check.
+- **Revisit when:** Claude Code lets a hook start a subagent directly, or a self-review slips through on real work.
 
 ### 2026-11-07: Add `explainer-video` and `house-style-design`, the first "make" skills
 

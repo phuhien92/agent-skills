@@ -14,7 +14,21 @@ Loaded only when wiring this skill into a harness, or when a harness calls it. T
 
 With no user present the skill follows its rule 7: baseline inferred and said so, confidence capped at medium, ledger saved without asking. It never waits.
 
-## Three ways to make it a gate
+## Who runs the check: a reviewer subagent
+
+`.claude/agents/decision-checker.md` is a Claude Code subagent that runs this skill with fresh context. The author is the worst reviewer of its own work, so in Claude Code the check runs there, not in the session that wrote the code. The plugin ships it as `agent-skills:decision-checker`; in a project, copy it into the project's `.claude/agents/`.
+
+Hand it a brief with three things:
+
+- **Scope:** the branch, commit range, or PR. From the hook, that's everything since the branch left its base, uncommitted and untracked files included.
+- **Baseline:** the spec path, the issue, or the user's request quoted.
+- **Where the author guessed:** the author's own list. The subagent treats it as step 2 of Check, never as the ledger.
+
+It has no way to ask a user, so rule 7 always applies there. To answer questions yourself, run `/decision-checker` in your own session instead.
+
+To review someone's PR: check out its branch and ask for the subagent with the PR as the scope and its linked issue as the baseline.
+
+## Four ways to make it a gate
 
 ### 1. A line in the task's instructions
 
@@ -26,9 +40,9 @@ Cheapest to add. It's still a prompt, so a worker can skip it. Pair it with opti
 
 ### 2. A Claude Code Stop hook
 
-`hooks/require-ledger.sh` blocks the agent from finishing once when the branch changes non-doc files but has no new or updated `decisions.md`. It then tells the agent to run this skill. It never blocks twice in a row, and it steps aside when it can't tell (no git repo, no base branch). Docs-only changes pass.
+`hooks/require-ledger.sh` blocks the agent from finishing once when the branch changes non-doc files but has no new or updated `decisions.md`. It then tells the agent to hand the branch to the reviewer subagent (above), and to run this skill itself only when that subagent isn't installed. It never blocks twice in a row, and it steps aside when it can't tell (no git repo, no base branch). Docs-only changes pass.
 
-Add to the project's `.claude/settings.json`, with the path pointing at wherever this skill is installed:
+Install the subagent too, or the hook falls back to a self-review. Add to the project's `.claude/settings.json`, with the path pointing at wherever this skill is installed:
 
 ```json
 {
@@ -65,4 +79,4 @@ DeepSeek Harness (`dsh`) discovers `<name>/SKILL.md` bundles in `<project>/.agen
     projectDir: .
 ```
 
-The bridge maps `Stop` to its `agent/turn-stopping` checkpoint, honors `{"decision": "block"}`, and passes `cwd` and `session_id`. It always sends `stop_hook_active: false` and has no cap on forced continuations, which is why the hook limits itself per session.
+Claude Code subagents don't carry over, so there the hook's fallback applies: the agent runs the skill itself. The bridge maps `Stop` to its `agent/turn-stopping` checkpoint, honors `{"decision": "block"}`, and passes `cwd` and `session_id`. It always sends `stop_hook_active: false` and has no cap on forced continuations, which is why the hook limits itself per session.

@@ -40,7 +40,7 @@ Read `skills/house-style-design/SKILL.md` and follow it. Make. Read the house st
 
 ## Agents check before the human reviews
 
-For build, review, or research work (including authoring skills here), have independent subagents do the front-loaded work first: drafting, verifying, and critiquing each other's output with fresh context. Hand the user the checked result plus a short ledger of the decisions made on their behalf, least-confident first (`/decision-checker` produces it). Ask before starting only when intent or scope is unclear.
+For build, review, or research work (including authoring skills here), have independent subagents do the front-loaded work first: drafting, verifying, and critiquing each other's output with fresh context. Hand the user the checked result plus a short ledger of the decisions made on their behalf, least-confident first (`/decision-checker` produces it; in Claude Code, hand that check to the `decision-checker` subagent so the author doesn't review itself). Ask before starting only when intent or scope is unclear.
 
 ## Adding a skill
 

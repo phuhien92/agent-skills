@@ -42,6 +42,7 @@ Your time goes into the facts in step 1 and the answers in steps 2 to 4. The ski
 - **A PR is too big to review.** `python3 <slice-spec>/scripts/diff_size.py . origin/main..HEAD` (from wherever the skill is installed; `skills/slice-spec/` in this repo) counts new lines per commit and for the branch, with moved code apart. Paste its table into the PR description; over 800 new lines, split the goal.
 - **Is this codebase getting better or worse?** `/codebase-rubric` writes a dated scorecard with evidence you can check in under a minute, and shows what changed since the last one.
 - **An agent just finished a change.** `/decision-checker` lists the calls it made where your prompt was silent, least confident first. Review that instead of the diff.
+- **Have a reviewer check it, not the author.** In Claude Code, ask for the `decision-checker` subagent (`.claude/agents/decision-checker.md`) with the branch or PR, the spec or issue, and where the author guessed. It runs the same check with fresh context and writes `decisions.md`. The Stop hook in `skills/decision-checker/hooks/` asks for it before an agent can finish; setup is in [harness.md](skills/decision-checker/harness.md).
 
 ## Quick start
 
@@ -153,6 +154,7 @@ agent-skills/
 │       ├── drawing.md
 │       ├── assets/card.html   # ultimate card template
 │       └── scripts/render.cjs # PNGs at 2x plus a contact sheet
+├── .claude/agents/            # Claude Code subagents (decision-checker: the check with fresh context)
 ├── .claude/commands/          # Claude Code slash commands
 ├── .cursor/skills/            # Cursor: symlink to skills/
 ├── commands/                  # Extra slash-command copies

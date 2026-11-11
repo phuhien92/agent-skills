@@ -104,6 +104,31 @@ def check_context_files() -> None:
         err("CLAUDE.md is not a symlink to AGENTS.md", "ln -sfn AGENTS.md CLAUDE.md")
 
 
+def check_agents(skills: set[str]) -> None:
+    """A subagent wraps one skill: .claude/agents/<name>.md, listed in the plugin manifest."""
+    folder = ROOT / ".claude" / "agents"
+    manifest = (ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+    for f in sorted(folder.glob("*.md")) if folder.is_dir() else []:
+        name, rel = f.stem, f".claude/agents/{f.name}"
+        if f.is_symlink():
+            err(f"{rel} is a symlink", f"make {rel} a real file; the plugin manifest points at it")
+        text = f.read_text(encoding="utf-8")
+        fm = frontmatter(text)
+        if fm is None or fm.get("name") != name:
+            err(f"{rel} name is {None if fm is None else fm.get('name')!r}",
+                f"start it with frontmatter and set `name: {name}` to match the file")
+        elif "description" not in fm:
+            err(f"{rel} has no description", "add `description:` saying when to hand work to this subagent")
+        if name not in skills:
+            err(f"{rel} has no matching skills/{name}/",
+                f"name the subagent after the skill it runs, or delete {rel}")
+        elif f"`{name}`" not in text:
+            err(f"{rel} doesn't load the `{name}` skill",
+                f"tell it to load the `{name}` skill; never copy the skill's text into it")
+        if f'"./{rel}"' not in manifest:
+            err(f"{rel} is not in .claude-plugin/plugin.json", f'add "./{rel}" to its "agents" list')
+
+
 def check_orphans(skills: set[str]) -> None:
     for folder in (".claude/commands", "commands", ".cursor/commands"):
         for f in sorted((ROOT / folder).glob("*.md")):
@@ -123,6 +148,7 @@ def main() -> int:
     for name in sorted(skills):
         check_skill(name)
     check_context_files()
+    check_agents(skills)
     check_orphans(skills)
 
     for line in errors + warnings:
