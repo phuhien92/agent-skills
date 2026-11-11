@@ -3,8 +3,10 @@
 # DeepSeek Harness through its dsh-hooks-claude-code bridge.
 #
 # Blocks the agent from finishing once, when the branch changes non-doc files
-# but no decisions.md was written or updated. The agent is told to run
-# decision-checker first. It self-limits: it never blocks twice in a row
+# but no decisions.md was written or updated. The agent is told to hand the
+# branch to the decision-checker subagent (agents/decision-checker.md), so a
+# reviewer with fresh context checks it, and to run the skill itself only
+# when no such subagent is installed. It self-limits: it never blocks twice in a row
 # (stop_hook_active) and never twice in one session for the same changes
 # (a marker in the git dir), because some harnesses always send
 # stop_hook_active=false and cap nothing. It steps aside whenever it can't
@@ -61,7 +63,14 @@ if [ -n "$sid" ]; then
   mkdir -p "$(dirname "$mark")" && printf '%s' "$key" > "$mark"
 fi
 
-cat <<'EOF'
-{"decision": "block", "reason": "This branch changes code but has no decisions ledger. Before finishing, run the decision-checker skill in Check mode on this branch (no user is present: follow its rule 7) and save decisions.md. Then hand back the ledger, not the diff."}
-EOF
+BASE="$base" python3 -c 'import json, os
+base = os.environ["BASE"]
+print(json.dumps({"decision": "block", "reason": (
+    "This branch changes code but has no decisions ledger. Before finishing, hand it to the "
+    "decision-checker subagent (Agent tool: decision-checker, or agent-skills:decision-checker "
+    "from the plugin) so a reviewer with fresh context checks it. Give it the scope (this branch "
+    "against " + base + "), the baseline (the spec path, the issue, or the user\x27s request quoted) "
+    "and every place you had to guess. It saves decisions.md. Then hand back its Check these first "
+    "list, not the diff. If no such subagent is installed, run the decision-checker skill yourself "
+    "in Check mode (no user is present: follow its rule 7) and save decisions.md.")}))'
 exit 0

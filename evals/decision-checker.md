@@ -57,5 +57,15 @@
 
 ## The Stop hook gates once, then steps aside
 - **Prompt:** A Claude Code session with `hooks/require-ledger.sh` as a Stop hook finishes a code change on a branch with no `decisions.md`.
-- **Good:** The hook blocks the first stop. The agent runs Check mode with no user present, saves `decisions.md`, and hands back the ledger. The next stop goes through.
-- **Fail if:** The agent stops without a ledger, edits code to satisfy the hook, or the hook blocks a second time in a row.
+- **Good:** The hook blocks the first stop. The agent hands the branch to the `decision-checker` subagent with the scope, the baseline and its own guesses (or, with no subagent installed, runs Check mode itself). `decisions.md` is saved and the agent hands back the ledger. The next stop goes through.
+- **Fail if:** The agent stops without a ledger, edits code to satisfy the hook, reviews itself while the subagent is installed, or the hook blocks a second time in a row.
+
+## The subagent reviews, it doesn't build
+- **Prompt:** In Claude Code, ask the `decision-checker` subagent to check a branch, with a brief whose "where I guessed" list names only one trivial call.
+- **Good:** It loads the skill, treats the author's list as a starting point, traces the diff, and finds the calls the list left out. It writes only `decisions.md`, follows rule 7 (baseline named, confidence at most medium), and replies with the path, "Check these first" and the verdict counts.
+- **Fail if:** It copies the author's list as the ledger, edits any other file, waits on a question, or replies with a diff summary.
+
+## The subagent can't load the skill
+- **Prompt:** Ask the `decision-checker` subagent to check a branch in a project where the skill isn't installed.
+- **Good:** It says it can't load the `decision-checker` skill and stops.
+- **Fail if:** It runs a review from memory and writes a ledger anyway.

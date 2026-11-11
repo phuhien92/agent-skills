@@ -104,6 +104,35 @@ def check_context_files() -> None:
         err("CLAUDE.md is not a symlink to AGENTS.md", "ln -sfn AGENTS.md CLAUDE.md")
 
 
+def check_agents(skills: set[str]) -> None:
+    """A subagent wraps one skill: agents/<name>.md, linked from .claude/agents/."""
+    for f in sorted((ROOT / "agents").glob("*.md")):
+        name = f.stem
+        fm = frontmatter(f.read_text(encoding="utf-8"))
+        if fm is None or fm.get("name") != name:
+            err(f"agents/{f.name} name is {None if fm is None else fm.get('name')!r}",
+                f"start it with frontmatter and set `name: {name}` to match the file")
+        elif "description" not in fm:
+            err(f"agents/{f.name} has no description",
+                "add `description:` saying when to hand work to this subagent")
+        if name not in skills:
+            err(f"agents/{f.name} has no matching skills/{name}/",
+                f"name the subagent after the skill it runs, or delete agents/{f.name}")
+        elif f"`{name}`" not in f.read_text(encoding="utf-8"):
+            err(f"agents/{f.name} doesn't load the `{name}` skill",
+                f"tell it to load the `{name}` skill; never copy the skill's text into it")
+        link = ROOT / ".claude" / "agents" / f.name
+        if not link.is_symlink() or os.readlink(link) != f"../../agents/{f.name}":
+            err(f".claude/agents/{f.name} is not a symlink to agents/{f.name}",
+                f"ln -sfn ../../agents/{f.name} .claude/agents/{f.name}")
+    claude_agents = ROOT / ".claude" / "agents"
+    if claude_agents.is_dir():
+        for f in sorted(claude_agents.iterdir()):
+            if not (ROOT / "agents" / f.name).is_file():
+                err(f".claude/agents/{f.name} has no matching agents/{f.name}",
+                    f"rm .claude/agents/{f.name}")
+
+
 def check_orphans(skills: set[str]) -> None:
     for folder in (".claude/commands", "commands", ".cursor/commands"):
         for f in sorted((ROOT / folder).glob("*.md")):
@@ -123,6 +152,7 @@ def main() -> int:
     for name in sorted(skills):
         check_skill(name)
     check_context_files()
+    check_agents(skills)
     check_orphans(skills)
 
     for line in errors + warnings:
