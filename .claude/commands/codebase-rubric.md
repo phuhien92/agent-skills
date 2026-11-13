@@ -1,5 +1,5 @@
 ---
-description: Score a codebase's health and write a scorecard with path:line evidence.
+description: Score a codebase's health and write a scorecard with path:line evidence. Use for a periodic health check, before a big refactor, or when the user asks whether a repo is drifting. Not a per-change gate.
 ---
 
 Follow the `codebase-rubric` skill.

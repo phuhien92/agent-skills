@@ -38,7 +38,7 @@ Before an agent opens a PR, it runs `python3 <slice-spec>/scripts/diff_size.py .
 | 3. File contract | Reads one known file, writes one known file | a contract table in the skill |
 | 4. Enforced gate | A hook or task instructions require it before "done" | a hook script plus an eval |
 
-`decision-checker` is at level 4: `harness.md` holds its contract, `hooks/require-ledger.sh` is its Stop-hook gate, and `.claude/agents/decision-checker.md` is the reviewer subagent the hook hands work to.
+`decision-checker` is at level 4: `harness.md` holds its contract, `hooks/require-ledger-before-pr.py` denies opening a PR without a ledger (PreToolUse), `hooks/require-ledger.sh` is its Stop-hook gate, and `.claude/agents/decision-checker.md` is the reviewer subagent both hooks hand work to. Both hooks work from a folder holding several repos and install once at user level.
 
 ### Design rules for blocks
 
@@ -47,6 +47,11 @@ Before an agent opens a PR, it runs `python3 <slice-spec>/scripts/diff_size.py .
 3. **One gate per task.** Add a block as the gate a delivery path owns. Don't stack reviewers on top of each other.
 4. **Evidence is not authorization.** A ledger, report, or recommendation informs the human's call. It never merges, deletes, or ships anything on its own.
 5. **Coaching skills stay human-facing.** They train the captain and don't need to run inside a harness.
+6. **Triggers live where the model looks.** A command's `description:` is often the only line the model sees of a skill (a pack opened next to a project loads `.claude/commands/`, not `skills/`). Every command description carries the skill's "Use when…" clause in one line; `validate.py` warns when one doesn't.
+
+### Long runs
+
+Status cadence (each phase change or ~10 minutes), worktrees when the session's cwd isn't a git repo, and the fetch-refspec fix behind false "unpushed commits" warnings are in [docs/long-agent-runs.md](docs/long-agent-runs.md).
 
 ## Invariants
 
@@ -68,7 +73,7 @@ agent-skills/
 ├── skills/<name>/                # SOURCE OF TRUTH
 │   ├── SKILL.md                  # frontmatter: name, description ("Use when …")
 │   ├── *.md                      # optional, loaded on demand
-│   └── hooks/                    # optional hook scripts that enforce a gate
+│   └── hooks/                    # optional hook scripts that enforce a gate (with tests in tools/)
 ├── .claude/agents/<name>.md      # optional Claude Code subagent that loads the <name> skill
 ├── .claude/commands/<name>.md    # Claude Code slash command → "follow the <name> skill"
 ├── commands/<name>.md            # plugin command copy (same text)
@@ -77,7 +82,7 @@ agent-skills/
 ├── .claude-plugin/plugin.json    # Claude Code plugin manifest
 ├── plugin.json                   # generic manifest
 ├── evals/<name>.md               # behavior cases per skill
-├── tools/validate.py             # structural checks (stdlib only)
+├── tools/validate.py             # structural checks (stdlib only), incl. command triggers
 ├── .github/workflows/validate.yml
 └── docs/
 ```
@@ -118,6 +123,14 @@ CI: `.github/workflows/validate.yml` runs the validator and the `codebase-rubric
 ## Decisions log
 
 Newest first. Each entry says what we decided, why, what we turned down, where it can fail, and when to revisit it.
+
+### 2026-11-13: Harness upgrades from a real multi-repo session
+
+- **Decision:** five changes from an audit of one long game-design session, where the pack was loaded but barely used. (1) Every command description now carries its skill's trigger in one line, and `validate.py` warns when one doesn't; decision-checker's says to run it after building and before opening or updating a PR, and its subagent's description starts "Use proactively". (2) `require-ledger.sh` checks each immediate child repo when the session's cwd isn't a git repo, and a new PreToolUse hook, `require-ledger-before-pr.py`, denies `gh pr create` and the GitHub MCP PR tool until the branch has a ledger; both install once at user level (`harness.md`). (3) A new `reference-originality` skill turns a competitor's screenshots or a mirroring spec into a keep/leave table and an original brief, flagged once. (4) `house-style-design` goes mockup first: three distinct directions for anything new, a pinpointing question after a vague "ugly", and a greyscale thumbnail check for sets. (5) `docs/long-agent-runs.md`: status cadence, the hand-made worktree recipe, and the fetch-refspec fix.
+- **Why:** the model saw the command one-liners, never the SKILL.md triggers, so no skill fired unprompted. The Stop hook wasn't installed, and installed it would have stepped aside because the cwd was a home folder, not a repo; and a Stop gate fires after a mid-turn PR is already open. No skill covered a user sharing a commercial game as reference, or iterating on a new mascot after "ugly, too generic".
+- **Turned down:** symlinking `skills/` into `.claude/skills/` in this repo (a second copy for Claude Code to load, and it hides the problem for other installs; installing the plugin is the fix and the README already says how); a hook that counts tool calls and nudges for a status update (prose first, structure if it fails again); scanning deeper than one level for repos (slow on a big home folder); a PR hook that self-limits like the Stop hook (a PR gate that lets the second try through is no gate).
+- **Where it can fail:** the PR hook finds the repo from `cd <path>`, `--repo`, or the MCP call's owner and repo; a PR opened another way (`gh api`, a browser, a different tool name) isn't covered, and when it can't find the clone it lets the call through with a note. The Stop hook in a home folder counts any child repo with changes since its base, including a notes repo with uncommitted edits; its once-per-session limit caps the cost. The trigger check matches words ("before", "after", "use when"), not whether the trigger is any good. `reference-originality` and the new design steps are checked by hand-graded evals only. `tools/test_ledger_hooks.py` covers both hooks against throwaway repos.
+- **Revisit when:** a PR slips through without a ledger on real work, the Stop hook nags about a repo nobody touched, or the plugin install makes SKILL.md descriptions visible everywhere (then the command one-liners can shrink again).
 
 ### 2026-11-11: The Stop hook hands the check to a reviewer subagent
 

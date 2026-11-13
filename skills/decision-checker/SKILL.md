@@ -4,9 +4,10 @@ description: >-
   Turn a finished AI-written change into a short ledger of the calls the
   agent made where the prompt or spec was silent, each with a verdict and a
   confidence, shakiest first. The user reads the ledger instead of every
-  changed line. Use before merging AI-written work, when a fix "works" but may
-  only cover the failing case, or when the user says /decision-checker. Drill
-  mode quizzes the user on the shakiest calls.
+  changed line. Use proactively after building a feature or fix and before
+  opening or updating a PR (not only before merging), when a fix "works" but
+  may only cover the failing case, or when the user says /decision-checker.
+  Drill mode quizzes the user on the shakiest calls.
 ---
 
 # Decision checker

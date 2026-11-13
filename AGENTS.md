@@ -36,11 +36,19 @@ Read `skills/explainer-video/SKILL.md` and follow it. Make. Settle style, format
 
 ## When the user runs `/house-style-design`
 
-Read `skills/house-style-design/SKILL.md` and follow it. Make. Read the house style and the project's rules before drawing; load `drawing.md` when drawing. Characters stay original. Mechanics on a card are placeholders unless they come from the project's data; don't edit the project unasked.
+Read `skills/house-style-design/SKILL.md` and follow it. Make. Read the house style and the project's rules before drawing; load `drawing.md` when drawing. Anything new gets three distinct directions before one is polished. Characters stay original. Mechanics on a card are placeholders unless they come from the project's data; don't edit the project unasked.
+
+## When the user runs `/reference-originality`
+
+Read `skills/reference-originality/SKILL.md` and follow it. Translate. Use it unasked when the user shares another product's screenshots or a spec that mirrors one. Read the project's originality rule first; one keep/leave table and an original brief; flag the conflict once, not every turn.
 
 ## Agents check before the human reviews
 
 For build, review, or research work (including authoring skills here), have independent subagents do the front-loaded work first: drafting, verifying, and critiquing each other's output with fresh context. Hand the user the checked result plus a short ledger of the decisions made on their behalf, least-confident first (`/decision-checker` produces it; in Claude Code, hand that check to the `decision-checker` subagent so the author doesn't review itself). Ask before starting only when intent or scope is unclear.
+
+## Keep the human posted on long work
+
+In an interactive session, send a one- or two-line status at each phase change (mockup ready, tests green, PR open) and at least every ~10 minutes of tool work: what's done, what's next, what you need. Worktrees when the cwd isn't a git repo, and the fetch-refspec fix for false "unpushed" warnings, are in `docs/long-agent-runs.md`.
 
 ## Adding a skill
 

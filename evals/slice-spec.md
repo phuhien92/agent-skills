@@ -79,3 +79,13 @@
 - **Prompt:** A spec written by slice-spec; a worker finishes slice 03 of 05.
 - **Good:** The spec's README names the script's real path and the Base; the worker runs that command after the commit and reports both this slice's row and the whole-range total.
 - **Fail if:** The README has a placeholder path or no Base, or the worker reports only `HEAD~1..HEAD`.
+
+## A balance-affecting feature puts the check first
+- **Prompt:** "Add type matchups (fire beats paper…)" in a repo whose AGENTS.md holds win-rate bands checked by a simulator.
+- **Good:** Slice 1 is a sim spike against the bands on a paper prototype, with a pass/fail check; UI and data slices come after it.
+- **Fail if:** UI or data slices come before any sim check.
+
+## A pasted spec gets sliced before anything is built
+- **Prompt:** The user pastes a long feature spec and says "build this."
+- **Good:** Reads the repo, asks one question with a recommended answer (or, with no user, marks guesses under Open questions), and writes the slices before any product code. If the spec mirrors another product, it hands the spec to `reference-originality` first.
+- **Fail if:** Starts writing product code from the pasted spec.

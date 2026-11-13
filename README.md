@@ -42,7 +42,7 @@ Your time goes into the facts in step 1 and the answers in steps 2 to 4. The ski
 - **A PR is too big to review.** `python3 <slice-spec>/scripts/diff_size.py . origin/main..HEAD` (from wherever the skill is installed; `skills/slice-spec/` in this repo) counts new lines per commit and for the branch, with moved code apart. Paste its table into the PR description; over 800 new lines, split the goal.
 - **Is this codebase getting better or worse?** `/codebase-rubric` writes a dated scorecard with evidence you can check in under a minute, and shows what changed since the last one.
 - **An agent just finished a change.** `/decision-checker` lists the calls it made where your prompt was silent, least confident first. Review that instead of the diff.
-- **Have a reviewer check it, not the author.** In Claude Code, ask for the `decision-checker` subagent (`.claude/agents/decision-checker.md`) with the branch or PR, the spec or issue, and where the author guessed. It runs the same check with fresh context and writes `decisions.md`. The Stop hook in `skills/decision-checker/hooks/` asks for it before an agent can finish; setup is in [harness.md](skills/decision-checker/harness.md).
+- **Have a reviewer check it, not the author.** In Claude Code, ask for the `decision-checker` subagent (`.claude/agents/decision-checker.md`) with the branch or PR, the spec or issue, and where the author guessed. It runs the same check with fresh context and writes `decisions.md`. Two hooks in `skills/decision-checker/hooks/` make it a gate: one denies `gh pr create` (and the GitHub MCP PR tool) until a ledger exists, the other asks for it before an agent can finish. Both work from a folder holding several repos; user-level setup is in [harness.md](skills/decision-checker/harness.md).
 
 ## Quick start
 
@@ -94,7 +94,7 @@ npx skills add phuhien92/agent-skills --skill brain   # needs the brain CLI: npm
 | Skill | What it does | Use when |
 |---|---|---|
 | [slice-spec](skills/slice-spec/SKILL.md) | Interviews you one question at a time, then cuts a feature into a `specs/<feature>/` folder of slices. Each slice answers one question at one seam and has a check a script can run. | Before handing a multi-step feature to agents, a plan too big to review, a slice that keeps failing mid-build |
-| [decision-checker](skills/decision-checker/SKILL.md) | Lists every decision an agent made where the prompt or spec was silent, with a verdict and a confidence, least confident first. Changes no code. Drill mode quizzes you on the shakiest calls. | Before merging AI-written work, a diff too big to read, a fix that "works" but may only cover one case |
+| [decision-checker](skills/decision-checker/SKILL.md) | Lists every decision an agent made where the prompt or spec was silent, with a verdict and a confidence, least confident first. Changes no code. Drill mode quizzes you on the shakiest calls. | After an agent builds something and before it opens or updates a PR, a diff too big to read, a fix that "works" but may only cover one case |
 
 ### Think and recall: start from what you know
 
@@ -108,7 +108,8 @@ npx skills add phuhien92/agent-skills --skill brain   # needs the brain CLI: npm
 | Skill | What it does | Use when |
 |---|---|---|
 | [explainer-video](skills/explainer-video/SKILL.md) | Builds a narrated video as one web page (HTML + GSAP), with every beat timed to the narration's sentences, renders it frame by frame, and mixes voice, effects and music to −14 LUFS. Styles: notebook draw-on, collage desk, recorded app, and more, picked by content. | A trailer, lore or history clip, an explainer, or the same story re-cut in another style |
-| [house-style-design](skills/house-style-design/SKILL.md) | Reads a project's art style and rules, draws new or upgraded art in code at twice the house canvas, frames it (for example as an ultimate collectible card), and renders PNGs checked at phone size. | A "legendary" or more detailed version of a character, a new card, a promo graphic that must match the app |
+| [house-style-design](skills/house-style-design/SKILL.md) | Reads a project's art style and rules, shows three distinct directions for anything new before polishing one, draws in code at twice the house canvas, frames it (for example as an ultimate collectible card), and renders PNGs checked at phone size, with sets checked in greyscale. | A new character, mascot or face set, a "legendary" or more detailed version of a character, a new card, art the user called ugly or generic |
+| [reference-originality](skills/reference-originality/SKILL.md) | Turns a competitor's screenshots or a spec that mirrors another product into a keep/leave table (keep the player feel and mechanic ideas, leave names, characters, layouts, numbers and branding) and an original brief, flags the conflict once, and saves the brief so it isn't argued again. | "Make ours like this game", screenshots from another app, a pasted spec that follows a commercial product screen by screen |
 
 ## Project structure
 
@@ -133,7 +134,7 @@ agent-skills/
 │   │   ├── SKILL.md
 │   │   ├── ledger.md
 │   │   ├── harness.md
-│   │   └── hooks/require-ledger.sh
+│   │   └── hooks/             # require-ledger.sh (Stop), require-ledger-before-pr.py (PreToolUse)
 │   ├── slice-spec/
 │   │   ├── SKILL.md
 │   │   ├── spec-format.md
@@ -149,11 +150,13 @@ agent-skills/
 │   │   ├── styles.md, checks.md, sound.md
 │   │   ├── assets/starter.html  # camera rig, 12 fps element layer, draw-on and ink helpers
 │   │   └── scripts/           # vo_lines (sentence timing), render_frames, mix
-│   └── house-style-design/
-│       ├── SKILL.md
-│       ├── drawing.md
-│       ├── assets/card.html   # ultimate card template
-│       └── scripts/render.cjs # PNGs at 2x plus a contact sheet
+│   ├── house-style-design/
+│   │   ├── SKILL.md
+│   │   ├── drawing.md
+│   │   ├── assets/card.html   # ultimate card template
+│   │   └── scripts/render.cjs # PNGs at 2x plus a contact sheet
+│   └── reference-originality/
+│       └── SKILL.md           # keep/leave table + original brief from a reference
 ├── .claude/agents/            # Claude Code subagents (decision-checker: the check with fresh context)
 ├── .claude/commands/          # Claude Code slash commands
 ├── .cursor/skills/            # Cursor: symlink to skills/
@@ -178,7 +181,7 @@ Each skill is a workflow, not a dump of notes:
 ```bash
 python3 tools/validate.py   # wiring + structure, runs in CI
 python3 -m unittest discover -s skills/codebase-rubric/scripts   # codebase-rubric scripts, runs in CI
-python3 -m unittest discover -s tools                            # tools, runs in CI
+python3 -m unittest discover -s tools                            # tools and the ledger hooks, runs in CI
 ```
 
 Behavior cases live in `evals/`.

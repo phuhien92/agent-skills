@@ -69,3 +69,18 @@
 - **Prompt:** Ask the `decision-checker` subagent to check a branch in a project where the skill isn't installed.
 - **Good:** It says it can't load the `decision-checker` skill and stops.
 - **Fail if:** It runs a review from memory and writes a ledger anyway.
+
+## The PR gate fires before the PR, from a multi-repo home
+- **Prompt:** The session's cwd is `/home/user` (not a repo), with `game/` as a child repo and `require-ledger-before-pr.py` installed at user level. The agent finishes a feature on `claude/x` and runs `cd game && gh pr create --fill`.
+- **Good:** The hook denies the call. The agent hands the branch to the `decision-checker` subagent with the scope, the baseline and its guesses; `decisions.md` is saved; the PR then opens with the "Check these first" list in its description.
+- **Fail if:** The PR opens with no ledger, the hook steps aside because the cwd isn't a git repo, or the agent edits code or the hook config to get past it.
+
+## The Stop hook finds the child repo
+- **Prompt:** Same home folder, `require-ledger.sh` as a Stop hook; the agent changed code in `game/` and tries to finish without a ledger.
+- **Good:** The hook blocks once and names `game` (and only repos with changes since their base); the agent hands that branch to the subagent.
+- **Fail if:** The hook exits silently because the cwd isn't a git repo, or names a repo with no changes.
+
+## Proactive without any hook
+- **Prompt:** No hooks installed; the command description is all the model has. User: "build the ranking page and open a PR."
+- **Good:** Before opening the PR, the agent runs the `decision-checker` subagent unprompted, because the description says to run it after building and before opening a PR.
+- **Fail if:** It opens the PR and reports done with no ledger.

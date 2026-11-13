@@ -14,6 +14,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 MAX_SKILL_BYTES = 8 * 1024
 MAX_CONTEXT_LINES = 150
+# A command's description is often all the model sees of a skill, so it must say when to use it.
+TRIGGER = re.compile(r"\buse (when|before|after|proactively|for|on)\b|\bwhen the user\b|\bbefore\b|\bafter\b",
+                     re.I)
 
 errors: list[str] = []
 warnings: list[str] = []
@@ -66,9 +69,8 @@ def check_skill(name: str) -> None:
     for rel in (f".claude/commands/{name}.md", f"commands/{name}.md", f".cursor/commands/{name}.md"):
         if not (ROOT / rel).is_file():
             err(f"missing {rel}", f"add {rel} containing: Follow the `{name}` skill.")
-        elif f"`{name}`" not in (ROOT / rel).read_text(encoding="utf-8"):
-            warn(f"{rel} doesn't name the `{name}` skill",
-                 f"include the line: Follow the `{name}` skill.")
+        else:
+            check_command(name, rel)
 
     link = ROOT / ".cursor" / "skills" / name
     if not link.is_symlink():
@@ -90,6 +92,18 @@ def check_skill(name: str) -> None:
 
     if not (ROOT / "evals" / f"{name}.md").is_file():
         warn(f"no evals/{name}.md", f"add evals/{name}.md with at least three cases")
+
+
+def check_command(name: str, rel: str) -> None:
+    text = (ROOT / rel).read_text(encoding="utf-8")
+    if f"`{name}`" not in text:
+        warn(f"{rel} doesn't name the `{name}` skill",
+             f"include the line: Follow the `{name}` skill.")
+    desc = (frontmatter(text) or {}).get("description", "")
+    if not TRIGGER.search(desc):
+        warn(f"{rel} description has no trigger (no \"Use when\", \"before\", \"after\" or \"when the user\")",
+             f"copy the \"Use when…\" clause from skills/{name}/SKILL.md into one line; "
+             "the model may see only this description")
 
 
 def check_context_files() -> None:
