@@ -8,7 +8,7 @@
     {
       "name": "agent-skills",
       "source": "./",
-      "description": "Agent skill blocks: /think-with-me, /brain, /behavioral-story-depth, /radio-system-design-practice, /slice-spec, /decision-checker, /codebase-rubric, /explainer-video, and /house-style-design, plus a decision-checker reviewer subagent."
+      "description": "Agent skill blocks: /think-with-me, /brain, /behavioral-story-depth, /radio-system-design-practice, /slice-spec, /decision-checker, /codebase-rubric, /explainer-video, /house-style-design, and /reference-originality, plus a decision-checker reviewer subagent."
     }
   ]
 }

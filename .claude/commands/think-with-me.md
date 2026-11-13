@@ -1,5 +1,5 @@
 ---
-description: Summon Hien Luong (Raymond) to help think and build.
+description: Summon Hien Luong (Raymond) to help think and build. Use when the user runs /think-with-me or asks how Hien thinks, builds, or solves problems.
 ---
 
 Follow the `think-with-me` skill.

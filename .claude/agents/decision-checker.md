@@ -1,12 +1,12 @@
 ---
 name: decision-checker
 description: >-
-  Independent reviewer for a finished AI-written change. Runs the
-  decision-checker skill in Check mode with fresh context and writes
-  decisions.md: the calls the author made where the prompt or spec was
-  silent, least confident first. Use before reporting a branch or PR done,
-  when the require-ledger Stop hook asks for a ledger, or to review a PR.
-  Never changes code.
+  Use proactively after any code change and BEFORE opening or updating a PR
+  or reporting a branch done, when a require-ledger hook asks for a ledger,
+  or to review a PR. Independent reviewer for a finished AI-written change:
+  runs the decision-checker skill in Check mode with fresh context and writes
+  decisions.md, the calls the author made where the prompt or spec was
+  silent, least confident first. Never changes code.
 tools: Read, Grep, Glob, Bash, Write, Skill
 model: inherit
 ---

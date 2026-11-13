@@ -1,5 +1,5 @@
 ---
-description: Practice frontend system design with RADIO. One question at a time.
+description: Practice frontend system design with RADIO. One question at a time. Use when the user wants to practice a system design prompt (news feed, autocomplete, chat) or asks to be grilled on a solution.md or design board.
 ---
 
 Follow the `radio-system-design-practice` skill.

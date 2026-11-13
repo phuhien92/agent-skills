@@ -1,5 +1,5 @@
 ---
-description: Make a narrated explainer, story or promo video as code, rendered frame by frame with its own sound mix.
+description: Make a narrated explainer, story or promo video as code, rendered frame by frame with its own sound mix. Use when the user asks for a short video, clip, trailer, explainer or lore video, or wants a video re-cut in another style.
 ---
 
 Follow the `explainer-video` skill.
