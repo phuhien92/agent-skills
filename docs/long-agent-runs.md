@@ -1,6 +1,6 @@
 # Long agent runs
 
-Three habits for agent work that runs longer than a few minutes, especially from a folder that holds several repos. None of them is a skill: they are how the session around the skills should behave. `AGENTS.md` points here.
+Four habits for agent work that runs longer than a few minutes, especially from a folder that holds several repos. None of them is a skill: they are how the session around the skills should behave. `AGENTS.md` points here.
 
 ## Keep the human posted
 
@@ -15,6 +15,23 @@ Each status says what's done, what's next, and anything you need from the person
 Why: the pack's blocks were built for unattended runs ("never block a run"), and that habit carried into interactive sessions as long silences. A person watching a session can't tell a slow step from a stuck one. In an unattended run, the handback and the ledger replace these updates.
 
 Ask-or-go: ask before starting only for a new character or look, a change to rules or balance, or a pasted spec (`reference-originality` and `slice-spec` cover those). Otherwise go, and list your guesses in the ledger.
+
+## Say what was checked, in three groups
+
+A report is only as good as the line between what was seen and what merely didn't fail. Sort every claim:
+
+- **Verified:** you saw, heard or measured the result. A screenshot you read, a number you compared, a check that ran to the end and printed its pass line.
+- **Ran without error:** it built, the suite passed, the script didn't throw, but nobody looked at what it produced. Say so in those words.
+- **Needs a human:** you can't check it from here. How music sounds on a phone speaker, how a control feels, a real iPhone, a judgement of taste. Say who should check it and how.
+
+Rules that come with it:
+
+- A check that didn't run is not a pass. A device suite that exited because its port was busy, a step skipped for a missing key, a test filtered out: report it as **not run**, with the reason, and rerun or hand it over.
+- Read the output, not the exit code. A wrapper loop can print `exit 0` after the real command failed.
+- When two runs disagree (flaky), say both happened. "Passed on the second run" is a different claim from "passed".
+- In a PR body, put anything not re-run on the final commit under its own line ("passed before the merge; not re-run on the merged result").
+
+Why: an agent's "done" is read as "checked". The worst report is a confident green made of skipped or half-run checks, because nobody goes back to look. Adapted from the reporting rule in op7418/guizang-game-skill (AGPL-3.0; the idea, not its text).
 
 ## Worktrees when the cwd isn't a git repo
 
