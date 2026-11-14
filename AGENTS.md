@@ -52,7 +52,7 @@ In an interactive session, send a one- or two-line status at each phase change (
 
 ## Say what was checked, in three groups
 
-Every report (a status, a handback, a PR body) sorts its claims into **verified** (you saw, heard or measured it work), **ran without error** (it built, passed or didn't throw, but nobody looked at the result) and **needs a human** (you can't check it: feel, sound, a real device, taste). Never let a check that didn't run read as passed. Detail and examples in `docs/long-agent-runs.md`.
+Every handback and PR body sorts its claims into **verified** (you saw, heard or measured it work), **ran without error** (it built, passed or didn't throw, but nobody looked at the result) and **needs a human** (feel, sound, a real device, taste). A check that never ran is listed as **not run**, with the reason, never as passed. A one-line status only has to avoid claiming a pass it didn't see. Detail in `docs/long-agent-runs.md`.
 
 ## Adding a skill
 

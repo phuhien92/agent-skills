@@ -18,7 +18,7 @@ Ask-or-go: ask before starting only for a new character or look, a change to rul
 
 ## Say what was checked, in three groups
 
-A report is only as good as the line between what was seen and what merely didn't fail. Sort every claim:
+A report is only as good as the line between what was seen and what merely didn't fail. In every handback and PR body, sort each claim into one of three groups, and list anything that never ran as **not run**:
 
 - **Verified:** you saw, heard or measured the result. A screenshot you read, a number you compared, a check that ran to the end and printed its pass line.
 - **Ran without error:** it built, the suite passed, the script didn't throw, but nobody looked at what it produced. Say so in those words.
@@ -26,12 +26,13 @@ A report is only as good as the line between what was seen and what merely didn'
 
 Rules that come with it:
 
-- A check that didn't run is not a pass. A device suite that exited because its port was busy, a step skipped for a missing key, a test filtered out: report it as **not run**, with the reason, and rerun or hand it over.
+- A check that didn't run is not a pass. A device suite that exited because its port was busy, a step skipped for a missing key, a test filtered out: list it as **not run**, with the reason, and rerun it or hand it over.
+- A one-line status doesn't need the full sort; it only must not claim a pass it didn't see.
 - Read the output, not the exit code. A wrapper loop can print `exit 0` after the real command failed.
 - When two runs disagree (flaky), say both happened. "Passed on the second run" is a different claim from "passed".
 - In a PR body, put anything not re-run on the final commit under its own line ("passed before the merge; not re-run on the merged result").
 
-Why: an agent's "done" is read as "checked". The worst report is a confident green made of skipped or half-run checks, because nobody goes back to look. Adapted from the reporting rule in op7418/guizang-game-skill (AGPL-3.0; the idea, not its text).
+Why: an agent's "done" is read as "checked". The worst report is a confident green made of skipped or half-run checks, because nobody goes back to look. Idea from op7418/guizang-game-skill (AGPL-3.0); no text copied.
 
 ## Worktrees when the cwd isn't a git repo
 

@@ -51,7 +51,7 @@ Before an agent opens a PR, it runs `python3 <slice-spec>/scripts/diff_size.py .
 
 ### Long runs
 
-Status cadence (each phase change or ~10 minutes), worktrees when the session's cwd isn't a git repo, and the fetch-refspec fix behind false "unpushed commits" warnings are in [docs/long-agent-runs.md](docs/long-agent-runs.md).
+Status cadence (each phase change or ~10 minutes), three-group reports (verified, ran without error, needs a human, plus not run), worktrees when the session's cwd isn't a git repo, and the fetch-refspec fix behind false "unpushed commits" warnings are in [docs/long-agent-runs.md](docs/long-agent-runs.md).
 
 ## Invariants
 
@@ -123,6 +123,14 @@ CI: `.github/workflows/validate.yml` runs the validator and the `codebase-rubric
 ## Decisions log
 
 Newest first. Each entry says what we decided, why, what we turned down, where it can fail, and when to revisit it.
+
+### 2026-11-14: Say what was checked, in three groups
+
+- **Decision:** handbacks and PR bodies sort claims into verified, ran without error and needs a human, and list a check that never ran as not run. Rule in `AGENTS.md`, detail in `docs/long-agent-runs.md`; the decision-checker sorts an author's claimed checks the same way, and an overstated claim is unsound (new eval case).
+- **Why:** in a long game session a device suite exited on a busy port before testing anything, and its wrapper printed `exit 0`; the same day a merged PR shipped with a device check that never got the port. "Done" reads as "checked". Idea from op7418/guizang-game-skill (AGPL-3.0); no text copied.
+- **Turned down:** the full sort in every one-line status (too heavy; a status only must not claim an unseen pass); a hook that greps reports for the groups (prose first, structure if it fails again).
+- **Where it can fail:** the sort is honour-based; only the decision-checker reads logs against claims.
+- **Revisit when:** a report overclaims again despite the rule.
 
 ### 2026-11-13: Harness upgrades from a real multi-repo session
 
