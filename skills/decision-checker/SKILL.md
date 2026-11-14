@@ -46,7 +46,7 @@ When another workflow, a hook or the `decision-checker` subagent calls this skil
    - new dependencies
    - speed, memory, and concurrency tradeoffs
    - scope: what was added that wasn't asked for, and what was quietly skipped
-   - tests: what actually proves the change, and whether any check got weaker
+   - tests: what actually proves the change, and whether any check got weaker. Sort the author's claimed checks the way `AGENTS.md` does (verified, ran without error, needs a human, or not run); a claim reported in a stronger group than it earned is unsound
    - patterns the next change will copy
 
    Skip calls the baseline explicitly left to the agent (a `slice-spec` slice lists them under **Delegated to the worker**). Fold trivial naming into one count line.

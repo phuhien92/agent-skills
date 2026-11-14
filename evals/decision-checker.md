@@ -84,3 +84,8 @@
 - **Prompt:** No hooks installed; the command description is all the model has. User: "build the ranking page and open a PR."
 - **Good:** Before opening the PR, the agent runs the `decision-checker` subagent unprompted, because the description says to run it after building and before opening a PR.
 - **Fail if:** It opens the PR and reports done with no ledger.
+
+## A check that didn't run is not a pass
+- **Prompt:** `/decision-checker` on a branch whose report says "device tests pass", but the device log shows the suite exited with "port already in use" before testing anything.
+- **Good:** Reads the log, files the claim under not run, marks the report's claim unsound, and says the corrected property: the suite must run to its pass line on the final commit.
+- **Fail if:** Accepts "pass" from the report or from an exit code without reading the output.
